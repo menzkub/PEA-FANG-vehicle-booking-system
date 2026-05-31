@@ -151,11 +151,20 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
   const [viewing, setViewing] = React.useState(null);
   const [editing, setEditing] = React.useState(null);
   const [forgotReqs, setForgotReqs] = React.useState([]);
+  const [lastLogins, setLastLogins] = React.useState({}); // { [userId]: { last_sign_in_at, confirmed_at } }
 
   React.useEffect(() => {
     supabase.from('forgot_password_requests').select('*')
       .is('seen_at', null).order('requested_at', { ascending: false }).limit(20)
       .then(({ data }) => setForgotReqs(data || []));
+    supabase.rpc('get_member_last_logins')
+      .then(({ data }) => {
+        if (data) {
+          const map = {};
+          data.forEach(r => { map[r.id] = r; });
+          setLastLogins(map);
+        }
+      });
   }, []);
 
   async function dismissForgotReq(id) {
@@ -245,7 +254,7 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
                 <th>สังกัด</th>
                 <th>ติดต่อ</th>
                 <th>บทบาท</th>
-                <th>วันที่สมัคร</th>
+                <th>Login ล่าสุด</th>
                 <th></th>
               </tr>
             </thead>
@@ -275,7 +284,17 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
                       </Select>
                     )}
                   </td>
-                  <td className="text-sm">{fmtDate(u.joined)}</td>
+                  <td className="text-sm">
+                    {(() => {
+                      const l = lastLogins[u.id];
+                      if (!l) return <span style={{color:'var(--text-3)'}}>—</span>;
+                      if (!l.last_sign_in_at) return <span style={{fontSize:11.5, color:'var(--warn)', fontWeight:600}}>ยังไม่เคย login</span>;
+                      const d = new Date(l.last_sign_in_at);
+                      const daysAgo = Math.floor((Date.now() - d) / 86400000);
+                      const color = daysAgo > 30 ? 'var(--text-3)' : daysAgo > 7 ? 'var(--warn)' : 'var(--ok)';
+                      return <span style={{color, fontSize:12}}>{fmtDateTime(l.last_sign_in_at)}</span>;
+                    })()}
+                  </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     {tab === "pending" ? (
                       <div style={{display:'flex', gap:4}}>
@@ -347,6 +366,7 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
       {viewing && (
         <MemberDetailModal
           user={viewing}
+          loginInfo={lastLogins[viewing.id] || null}
           onClose={() => setViewing(null)}
           onEdit={() => { setEditing(viewing); setViewing(null); }}
           onApprove={viewing.status === "pending" ? () => { onApproveUser(viewing.id); setViewing(null); } : null}
@@ -366,7 +386,7 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
 }
 
 // ─── Member Detail Modal ──────────────────────────────────────────
-function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
+function MemberDetailModal({ user, loginInfo, onClose, onEdit, onApprove, onReject }) {
   const [genLink, setGenLink] = React.useState(null);   // { link, name } | 'loading' | { error }
   const [history, setHistory] = React.useState([]);
   const [historyOpen, setHistoryOpen] = React.useState(false);
@@ -439,6 +459,14 @@ function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
         <Field label="บทบาท" value={user.role === "admin" ? "ผู้ดูแลระบบ (Admin)" : user.role === "manager" ? "ผู้จัดการ (Manager)" : "ผู้ใช้งาน (User)"}/>
         <Field label="วันที่สมัคร" value={fmtDate(user.joined)}/>
         <Field label="รหัสในระบบ" value={user.id}/>
+        <Field label="Login ล่าสุด" value={
+          !loginInfo ? '—' :
+          !loginInfo.last_sign_in_at ? <span style={{color:'var(--warn)', fontWeight:600}}>ยังไม่เคย Login</span> :
+          <span>{fmtDateTime(loginInfo.last_sign_in_at)}</span>
+        }/>
+        {loginInfo?.confirmed_at && (
+          <Field label="ยืนยันบัญชีเมื่อ" value={fmtDateTime(loginInfo.confirmed_at)}/>
+        )}
       </div>
 
       {/* Reset password link generator */}

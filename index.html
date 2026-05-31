@@ -14,9 +14,10 @@
   <body>
     <div id="root"></div>
     <script>
-      // Runs before any ES module — catches type=recovery in both
-      // implicit flow (hash) and PKCE flow (query string)
-      if (window.location.hash.includes('type=recovery') ||
+      // pwd_reset=1 is injected by our Edge Function into redirectTo.
+      // This runs before any ES module so Supabase cannot clear it.
+      if (window.location.search.includes('pwd_reset=1') ||
+          window.location.hash.includes('type=recovery') ||
           window.location.search.includes('type=recovery')) {
         sessionStorage.setItem('pea-recovery', '1');
       }

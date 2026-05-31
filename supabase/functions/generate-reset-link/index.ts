@@ -51,9 +51,14 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Use the request's Origin as the redirect base — works for any deployment URL
+  const origin = req.headers.get("Origin") || "https://easydrive-fang.vercel.app";
+  const redirectTo = `${origin}/?pwd_reset=1`;
+
   const { data, error } = await adminClient.auth.admin.generateLink({
     type: "recovery",
     email: `${emp}@easydrive.local`,
+    options: { redirectTo },
   });
 
   if (error || !data?.properties?.action_link) {
