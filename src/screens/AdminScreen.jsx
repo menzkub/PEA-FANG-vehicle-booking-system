@@ -335,7 +335,13 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
                     {tab === "pending" ? (
                       <span className="pill pending"><span className="dot"></span>รออนุมัติ</span>
                     ) : (
-                      <Select value={u.role} onChange={(e) => onChangeRole(u.id, e.target.value)} style={{fontSize:12.5, width:120}}>
+                      <Select value={u.role} onChange={(e) => onChangeRole(u.id, e.target.value)}
+                        style={{fontSize:12.5, width:130,
+                          fontWeight: u.role === 'admin' ? 700 : u.role === 'manager' ? 600 : 400,
+                          color: u.role === 'admin' ? '#7c3aed' : u.role === 'manager' ? '#0369a1' : 'inherit',
+                          background: u.role === 'admin' ? '#f5f3ff' : u.role === 'manager' ? '#f0f9ff' : '',
+                          borderColor: u.role === 'admin' ? '#a78bfa' : u.role === 'manager' ? '#7dd3fc' : '',
+                        }}>
                         <option value="user">ผู้ใช้งาน</option>
                         <option value="manager">ผู้จัดการ</option>
                         <option value="admin">ผู้ดูแลระบบ</option>
@@ -391,7 +397,11 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
                 {tab === "pending" ? (
                   <span className="pill pending" style={{flexShrink:0}}><span className="dot"></span>รออนุมัติ</span>
                 ) : (
-                  <span className="pill done" style={{flexShrink:0, fontSize:11}}>{u.role === "admin" ? "แอดมิน" : u.role === "manager" ? "ผู้จัดการ" : "ผู้ใช้"}</span>
+                  u.role === "admin"
+                    ? <span style={{flexShrink:0, fontSize:11, fontWeight:700, color:'#7c3aed', background:'#f5f3ff', border:'1.5px solid #a78bfa', borderRadius:6, padding:'2px 8px'}}>👑 แอดมิน</span>
+                    : u.role === "manager"
+                    ? <span style={{flexShrink:0, fontSize:11, fontWeight:600, color:'#0369a1', background:'#f0f9ff', border:'1px solid #7dd3fc', borderRadius:6, padding:'2px 8px'}}>ผู้จัดการ</span>
+                    : <span className="pill done" style={{flexShrink:0, fontSize:11}}>ผู้ใช้</span>
                 )}
               </div>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:10, fontSize:12.5}}>
@@ -503,7 +513,10 @@ function MemberDetailModal({ user, loginInfo, onClose, onEdit, onApprove, onReje
             )}
           </div>
           <div className="text-sm muted" style={{marginTop:4}}>
-            {user.role === "admin" ? "ผู้ดูแลระบบ" : user.role === "manager" ? "ผู้จัดการ" : "ผู้ใช้งาน"}
+            {user.role === "admin"
+              ? <span style={{fontWeight:700, color:'#7c3aed'}}>👑 ผู้ดูแลระบบ</span>
+              : user.role === "manager" ? <span style={{fontWeight:600, color:'#0369a1'}}>ผู้จัดการ</span>
+              : "ผู้ใช้งาน"}
             <span style={{margin:'0 6px'}}>·</span>
             สมาชิกตั้งแต่ {fmtDate(user.joined)}
           </div>
@@ -514,7 +527,13 @@ function MemberDetailModal({ user, loginInfo, onClose, onEdit, onApprove, onReje
         <Field label="สังกัด" value={user.dept}/>
         <Field label="อีเมล" value={<a href={`mailto:${user.email}`} style={{color:'var(--pea-purple)'}}>{user.email}</a>}/>
         <Field label="เบอร์โทร" value={<a href={`tel:${user.phone}`} style={{color:'var(--pea-purple)'}}>{user.phone}</a>}/>
-        <Field label="บทบาท" value={user.role === "admin" ? "ผู้ดูแลระบบ (Admin)" : user.role === "manager" ? "ผู้จัดการ (Manager)" : "ผู้ใช้งาน (User)"}/>
+        <Field label="บทบาท" value={
+          user.role === "admin"
+            ? <span style={{fontWeight:700, color:'#7c3aed', background:'#f5f3ff', border:'1.5px solid #a78bfa', borderRadius:6, padding:'2px 10px', fontSize:12.5}}>👑 ผู้ดูแลระบบ (Admin)</span>
+            : user.role === "manager"
+            ? <span style={{fontWeight:600, color:'#0369a1', background:'#f0f9ff', border:'1px solid #7dd3fc', borderRadius:6, padding:'2px 10px', fontSize:12.5}}>ผู้จัดการ (Manager)</span>
+            : "ผู้ใช้งาน (User)"
+        }/>
         <Field label="วันที่สมัคร" value={fmtDate(user.joined)}/>
         <Field label="รหัสในระบบ" value={user.id}/>
         <Field label="Login ล่าสุด" value={
