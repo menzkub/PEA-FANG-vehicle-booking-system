@@ -150,6 +150,26 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
   const [search, setSearch] = React.useState("");
   const [viewing, setViewing] = React.useState(null);
   const [editing, setEditing] = React.useState(null);
+  const [forgotReqs, setForgotReqs] = React.useState([]);
+
+  React.useEffect(() => {
+    supabase.from('forgot_password_requests').select('*')
+      .is('seen_at', null).order('requested_at', { ascending: false }).limit(20)
+      .then(({ data }) => setForgotReqs(data || []));
+  }, []);
+
+  async function dismissForgotReq(id) {
+    await supabase.from('forgot_password_requests')
+      .update({ seen_by: user.name, seen_at: new Date().toISOString() }).eq('id', id);
+    setForgotReqs(prev => prev.filter(r => r.id !== id));
+  }
+
+  async function dismissAllForgotReqs() {
+    const now = new Date().toISOString();
+    await supabase.from('forgot_password_requests')
+      .update({ seen_by: user.name, seen_at: now }).is('seen_at', null);
+    setForgotReqs([]);
+  }
 
   const all = users.filter((u) => {
     if (search) {
@@ -165,6 +185,38 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
 
   return (
     <div>
+      {/* Forgot password request notifications */}
+      {forgotReqs.length > 0 && (
+        <div style={{marginBottom:14, background:'#fffbeb', border:'1px solid #fcd34d', borderRadius:12, overflow:'hidden'}}>
+          <div style={{display:'flex', alignItems:'center', gap:10, padding:'10px 14px', borderBottom:'1px solid #fde68a'}}>
+            <span style={{fontSize:15}}>🔔</span>
+            <span style={{fontWeight:700, fontSize:13.5, color:'#92400e'}}>ผู้ใช้ขอรีเซ็ตรหัสผ่าน {forgotReqs.length} คน</span>
+            <button className="btn sm ghost" style={{marginLeft:'auto', fontSize:11.5, color:'#92400e', borderColor:'#fcd34d'}} onClick={dismissAllForgotReqs}>รับทราบทั้งหมด</button>
+          </div>
+          <div style={{display:'flex', flexDirection:'column', gap:0}}>
+            {forgotReqs.map((r, i) => {
+              const minsAgo = Math.round((Date.now() - new Date(r.requested_at)) / 60000);
+              const timeStr = minsAgo < 1 ? 'เมื่อกี้' : minsAgo < 60 ? `${minsAgo} นาทีที่แล้ว` : `${Math.round(minsAgo/60)} ชั่วโมงที่แล้ว`;
+              return (
+                <div key={r.id} style={{display:'flex', alignItems:'center', gap:12, padding:'9px 14px', borderBottom: i < forgotReqs.length-1 ? '1px solid #fde68a' : 'none'}}>
+                  <div className="avatar" style={{width:32, height:32, fontSize:13, background:'#fde68a', color:'#92400e', flexShrink:0}}>{r.name?.charAt(0)}</div>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:13, fontWeight:600, color:'#78350f'}}>{r.name}</div>
+                    <div style={{fontSize:11.5, color:'#a16207'}}>รหัส {r.emp} · {timeStr}</div>
+                  </div>
+                  <button className="btn sm ghost" style={{fontSize:11.5, flexShrink:0, color:'#92400e', borderColor:'#fcd34d'}}
+                    onClick={() => { const u = users.find(x => x.emp === r.emp); if (u) setViewing(u); dismissForgotReq(r.id); }}>
+                    ดูโปรไฟล์
+                  </button>
+                  <button className="btn sm ghost" style={{fontSize:11.5, flexShrink:0, color:'#a16207', borderColor:'transparent'}}
+                    onClick={() => dismissForgotReq(r.id)}>✕</button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="card card-pad" style={{marginBottom:14}}>
         <div style={{display:'flex', alignItems:'center', gap:14, flexWrap:'wrap'}}>
           <div>

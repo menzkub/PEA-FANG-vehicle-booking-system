@@ -40,7 +40,7 @@ function App() {
   const [vehicleHistory, setVehicleHistory] = React.useState([]);
   const [mileageCorrections, setMileageCorrections] = React.useState([]);
   const [departments, setDepartments] = React.useState([]);
-  const [appConfig, setAppConfig] = React.useState({ checklist: null, vehicleTypes: null, fuelTypes: null, purposes: null, fuelPrices: null, syncSchedule: null });
+  const [appConfig, setAppConfig] = React.useState({ checklist: null, vehicleTypes: null, fuelTypes: null, purposes: null, fuelPrices: null, syncSchedule: null, resetContact: null });
   const [recoveryMode, setRecoveryMode] = React.useState(() => {
     const flag = sessionStorage.getItem('pea-recovery') === '1';
     if (flag) sessionStorage.removeItem('pea-recovery');
@@ -161,7 +161,9 @@ function App() {
     if (cfg.data) {
       const map = {};
       cfg.data.forEach(r => { map[r.key] = r.value; });
-      setAppConfig({ checklist: map.checklist || null, vehicleTypes: map.vehicle_types || null, fuelTypes: map.fuel_types || null, purposes: map.purposes || null, fuelPrices: map.fuel_prices || null, syncSchedule: map.sync_schedule || null });
+      const rc = map.reset_contact || null;
+      if (rc) localStorage.setItem('pea-reset-contact', JSON.stringify(rc));
+      setAppConfig({ checklist: map.checklist || null, vehicleTypes: map.vehicle_types || null, fuelTypes: map.fuel_types || null, purposes: map.purposes || null, fuelPrices: map.fuel_prices || null, syncSchedule: map.sync_schedule || null, resetContact: rc });
     }
 
     if (v.error?.code === '42501' || b.error?.code === '42501') {

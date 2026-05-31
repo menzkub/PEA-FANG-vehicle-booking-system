@@ -137,6 +137,13 @@ function AuthScreen({ onLogin, registered, onRegister, departments }) {
     setMode("pending");
   }
 
+  const resetContact = React.useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('pea-reset-contact') || 'null'); } catch { return null; }
+  }, []);
+  const contactPhone = resetContact?.phone || '053-451-666 ต่อ 12';
+  const contactPhoneLink = resetContact?.phoneLink || 'tel:053451666';
+  const contactNote = resetContact?.note || 'แจ้งรหัสพนักงานและชื่อของคุณ';
+
   async function doForgot() {
     setErr("");
     if (!forgotEmail.trim()) { setErr("กรุณากรอกรหัสพนักงาน"); return; }
@@ -150,6 +157,8 @@ function AuthScreen({ onLogin, registered, onRegister, departments }) {
     }
     setForgotProfile({ name: data.name, email: data.email || '' });
     setMode("forgot-sent");
+    // Log request so admin gets notified
+    supabase.from('forgot_password_requests').insert({ emp: forgotEmail.trim(), name: data.name }).then(() => {});
   }
 
   return (
@@ -442,11 +451,11 @@ function AuthScreen({ onLogin, registered, onRegister, departments }) {
               <div style={{padding:'16px 18px', background:'var(--info-bg)', borderRadius:12, border:'1px solid #93c5fd', marginBottom:16}}>
                 <div style={{fontWeight:700, fontSize:13.5, color:'#1e40af', marginBottom:10}}>📞 ติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่าน</div>
                 <div style={{fontSize:13, color:'#1e4f88', lineHeight:1.8}}>
-                  แจ้งรหัสพนักงาน <b style={{fontFamily:'var(--font-mono)', background:'rgba(30,64,175,0.1)', padding:'1px 6px', borderRadius:4}}>{forgotEmail}</b> และชื่อของคุณ
+                  {contactNote} — รหัสพนักงาน <b style={{fontFamily:'var(--font-mono)', background:'rgba(30,64,175,0.1)', padding:'1px 6px', borderRadius:4}}>{forgotEmail}</b>
                 </div>
                 <div style={{marginTop:10, display:'flex', flexDirection:'column', gap:6}}>
-                  <a href="tel:053451666" style={{display:'flex', alignItems:'center', gap:8, color:'var(--pea-purple)', fontWeight:600, fontSize:13.5, textDecoration:'none'}}>
-                    <span style={{fontSize:16}}>📱</span> 053-451-666 ต่อ 12
+                  <a href={contactPhoneLink} style={{display:'flex', alignItems:'center', gap:8, color:'var(--pea-purple)', fontWeight:600, fontSize:13.5, textDecoration:'none'}}>
+                    <span style={{fontSize:16}}>📱</span> {contactPhone}
                   </a>
                   {forgotProfile.email && (
                     <div style={{fontSize:12.5, color:'var(--text-3)'}}>

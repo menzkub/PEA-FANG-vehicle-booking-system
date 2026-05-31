@@ -803,6 +803,12 @@ function fmtLogTime(iso) {
 // ─── Data Settings (admin only) ────────────────────────────────────
 function DataSettings({ appConfig, onSaveConfig, defaultConfig, departments, pushToast }) {
   const [subTab, setSubTab] = React.useState('checklist');
+
+  const DEFAULT_RESET_CONTACT = { phone: '053-451-666 ต่อ 12', phoneLink: 'tel:053451666', note: 'แจ้งรหัสพนักงานและชื่อของคุณ' };
+  const [resetContact, setResetContact] = React.useState(() => {
+    try { return appConfig?.resetContact || JSON.parse(localStorage.getItem('pea-reset-contact') || 'null') || DEFAULT_RESET_CONTACT; }
+    catch { return DEFAULT_RESET_CONTACT; }
+  });
   const [saving, setSaving] = React.useState(false);
   const [setupNeeded, setSetupNeeded] = React.useState(false);
   const [confirmDlg, setConfirmDlg] = React.useState(null);
@@ -991,7 +997,7 @@ CREATE POLICY "auth_write" ON app_config FOR ALL TO authenticated USING (true);`
   return (
     <div style={{marginTop:16}}>
       <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:16}}>
-        {[['checklist','✅ รายการตรวจสอบ'],['purposes','📋 วัตถุประสงค์'],['vehicleTypes','🚗 ประเภทรถ'],['fuelTypes','⛽ เชื้อเพลิง'],['fuelPrices','💰 ราคาน้ำมัน'],['depts','🏢 แผนก']].map(([k,l]) => (
+        {[['checklist','✅ รายการตรวจสอบ'],['purposes','📋 วัตถุประสงค์'],['vehicleTypes','🚗 ประเภทรถ'],['fuelTypes','⛽ เชื้อเพลิง'],['fuelPrices','💰 ราคาน้ำมัน'],['depts','🏢 แผนก'],['contact','📞 ติดต่อ']].map(([k,l]) => (
           <button key={k} className={"btn sm" + (subTab === k ? " primary" : " ghost")} onClick={() => setSubTab(k)}>{l}</button>
         ))}
       </div>
@@ -1349,6 +1355,50 @@ CREATE POLICY "auth_write" ON app_config FOR ALL TO authenticated USING (true);`
       {/* ── Departments (embedded) ── */}
       {subTab === 'depts' && (
         <DeptManager departments={departments} pushToast={pushToast}/>
+      )}
+
+      {/* ── Contact info for forgot password screen ── */}
+      {subTab === 'contact' && (
+        <div className="card card-pad" style={{marginBottom:16}}>
+          <h3 style={{margin:'0 0 4px', fontSize:15}}>📞 ข้อมูลติดต่อสำหรับลืมรหัสผ่าน</h3>
+          <p style={{margin:'0 0 18px', fontSize:13, color:'var(--text-3)'}}>ข้อความที่แสดงเมื่อผู้ใช้กด "ลืมรหัสผ่าน" — แสดงวิธีติดต่อ admin</p>
+          <div style={{display:'flex', flexDirection:'column', gap:14}}>
+            <div>
+              <div style={{fontSize:13, fontWeight:600, marginBottom:6}}>เบอร์โทรศัพท์</div>
+              <input className="input" value={resetContact.phone}
+                onChange={e => setResetContact(v => ({...v, phone: e.target.value}))}
+                placeholder="เช่น 053-451-666 ต่อ 12"/>
+              <div style={{fontSize:11.5, color:'var(--text-3)', marginTop:4}}>ข้อความที่แสดงใต้ปุ่มโทร</div>
+            </div>
+            <div>
+              <div style={{fontSize:13, fontWeight:600, marginBottom:6}}>ลิงก์โทรศัพท์ (tel:)</div>
+              <input className="input" value={resetContact.phoneLink}
+                onChange={e => setResetContact(v => ({...v, phoneLink: e.target.value}))}
+                placeholder="เช่น tel:053451666"/>
+              <div style={{fontSize:11.5, color:'var(--text-3)', marginTop:4}}>ใส่แค่ตัวเลข ไม่มี -, วรรค เช่น tel:053451666</div>
+            </div>
+            <div>
+              <div style={{fontSize:13, fontWeight:600, marginBottom:6}}>ข้อความเพิ่มเติม</div>
+              <input className="input" value={resetContact.note}
+                onChange={e => setResetContact(v => ({...v, note: e.target.value}))}
+                placeholder="เช่น แจ้งรหัสพนักงานและชื่อของคุณ"/>
+            </div>
+            <div style={{padding:'12px 14px', background:'var(--info-bg)', borderRadius:10, border:'1px solid #93c5fd', fontSize:13}}>
+              <div style={{fontWeight:600, color:'#1e40af', marginBottom:6}}>ตัวอย่างที่จะแสดง:</div>
+              <div style={{color:'#1e4f88', lineHeight:1.8}}>{resetContact.note || '—'}</div>
+              <div style={{marginTop:6, color:'var(--pea-purple)', fontWeight:600}}>📱 {resetContact.phone || '—'}</div>
+            </div>
+            <button className="btn primary" style={{alignSelf:'flex-start'}} disabled={saving}
+              onClick={() => confirm({ kind:'primary', title:'บันทึกข้อมูลติดต่อ?', message:'อัปเดตข้อมูลที่แสดงในหน้าลืมรหัสผ่านทันที',
+                onConfirm: async () => {
+                  await save('reset_contact', resetContact);
+                  localStorage.setItem('pea-reset-contact', JSON.stringify(resetContact));
+                }
+              })}>
+              {saving ? '⏳ กำลังบันทึก...' : '💾 บันทึกข้อมูลติดต่อ'}
+            </button>
+          </div>
+        </div>
       )}
 
       <ConfirmDialog confirm={confirmDlg} onClose={() => setConfirmDlg(null)}/>
