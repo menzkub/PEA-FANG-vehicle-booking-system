@@ -71,6 +71,52 @@ function SettingsScreen({ currentUser, bookings, vehicles, departments, onUpdate
   );
 }
 
+// ─── Build Info ────────────────────────────────────────────────────
+const GITHUB_REPO = 'menzkub/EasyDrive';
+
+function BuildInfo() {
+  const [status, setStatus] = React.useState('checking'); // checking | current | behind | error
+
+  React.useEffect(() => {
+    fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits/main`, {
+      headers: { Accept: 'application/vnd.github.sha' },
+    })
+      .then(r => {
+        if (!r.ok) throw new Error('fetch failed');
+        return r.text();
+      })
+      .then(sha => {
+        setStatus(sha.trim().startsWith(__GIT_COMMIT__) ? 'current' : 'behind');
+      })
+      .catch(() => setStatus('error'));
+  }, []);
+
+  const dot = {
+    checking: { color: '#555', label: 'กำลังตรวจสอบ…' },
+    current:  { color: '#22c55e', label: 'ระบบเป็นปัจจุบัน' },
+    behind:   { color: '#eab308', label: 'มีการอัปเดตรอ Deploy' },
+    error:    { color: '#94a3b8', label: 'ตรวจสอบไม่ได้ (repo อาจเป็น private)' },
+  }[status];
+
+  return (
+    <div style={{marginTop:8, padding:'10px 14px', borderRadius:10, background:'var(--surface-2)', border:'1px solid var(--border)'}}>
+      <div style={{display:'flex', flexWrap:'wrap', gap:'4px 16px', alignItems:'center'}}>
+        <span style={{display:'inline-flex', alignItems:'center', gap:6}}>
+          <span style={{width:9, height:9, borderRadius:'50%', background: dot.color, display:'inline-block',
+            boxShadow: status === 'current' ? `0 0 6px ${dot.color}` : status === 'behind' ? `0 0 6px ${dot.color}` : 'none',
+            animation: status === 'checking' ? 'pulse 1.4s ease-in-out infinite' : 'none'}}/>
+          <span style={{fontSize:12, color:'var(--text-2)', fontWeight: status === 'behind' ? 600 : 400}}>{dot.label}</span>
+        </span>
+        <span style={{fontSize:11.5, fontWeight:600, color:'var(--pea-purple)', fontFamily:'monospace'}}>v{__APP_VERSION__}</span>
+        <span style={{fontSize:11, color:'var(--text-3)', fontFamily:'monospace'}}>#{__GIT_COMMIT__}</span>
+        <span style={{fontSize:11, color:'var(--text-3)', marginLeft:'auto'}}>
+          build: {new Date(__BUILD_TIME__).toLocaleString('th-TH', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Account Settings ──────────────────────────────────────────────
 function AccountSettings({ currentUser, deptNames, onUpdateProfile, pushToast }) {
   const [editing, setEditing] = React.useState(false);
@@ -431,14 +477,7 @@ function AccountSettings({ currentUser, deptNames, onUpdateProfile, pushToast })
       </div>
 
       {/* Build info */}
-      <div style={{marginTop:8, padding:'10px 14px', borderRadius:10, background:'var(--surface-2)', border:'1px solid var(--border)', display:'flex', flexWrap:'wrap', gap:'4px 20px', alignItems:'center'}}>
-        <span style={{fontSize:11.5, color:'var(--text-3)'}}>EasyDrive</span>
-        <span style={{fontSize:11.5, fontWeight:600, color:'var(--pea-purple)', fontFamily:'monospace'}}>v{__APP_VERSION__}</span>
-        <span style={{fontSize:11, color:'var(--text-3)', fontFamily:'monospace'}}>#{__GIT_COMMIT__}</span>
-        <span style={{fontSize:11, color:'var(--text-3)', marginLeft:'auto'}}>
-          build: {new Date(__BUILD_TIME__).toLocaleString('th-TH', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}
-        </span>
-      </div>
+      <BuildInfo />
     </div>
   );
 }

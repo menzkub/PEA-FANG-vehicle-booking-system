@@ -141,18 +141,14 @@ function AuthScreen({ onLogin, registered, onRegister, departments }) {
     setErr("");
     if (!forgotEmail.trim()) { setErr("กรุณากรอกรหัสพนักงาน"); return; }
     setLoading(true);
-    // ตรวจสอบว่ารหัสพนักงานมีในระบบจริง
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('name, email')
-      .eq('emp', forgotEmail.trim())
-      .single();
+    // ใช้ RPC เพราะ anon user ไม่มีสิทธิ์อ่าน profiles table โดยตรง (RLS)
+    const { data, error } = await supabase.rpc('check_emp_exists', { p_emp: forgotEmail.trim() });
     setLoading(false);
-    if (!profile) {
+    if (error || !data?.found) {
       setErr(`ไม่พบรหัสพนักงาน "${forgotEmail.trim()}" ในระบบ กรุณาตรวจสอบรหัสพนักงานอีกครั้ง`);
       return;
     }
-    setForgotProfile(profile);
+    setForgotProfile({ name: data.name, email: data.email || '' });
     setMode("forgot-sent");
   }
 
