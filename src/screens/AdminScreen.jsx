@@ -317,6 +317,8 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
 function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
   const [genLink, setGenLink] = React.useState(null);   // { link, name } | 'loading' | { error }
   const [history, setHistory] = React.useState([]);
+  const [historyOpen, setHistoryOpen] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
   const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-reset-link`;
 
   async function fetchHistory() {
@@ -415,9 +417,13 @@ function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
                   <input readOnly value={genLink.link}
                     style={{flex:1, padding:'7px 10px', borderRadius:7, border:'1px solid var(--border)', fontSize:11.5, fontFamily:'var(--font-mono)', background:'var(--surface)', color:'var(--text-2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0}}
                   />
-                  <button className="btn sm primary" style={{flexShrink:0}}
-                    onClick={() => { navigator.clipboard.writeText(genLink.link); }}>
-                    📋 คัดลอก
+                  <button className="btn sm primary" style={{flexShrink:0, minWidth:80}}
+                    onClick={() => {
+                      navigator.clipboard.writeText(genLink.link);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2500);
+                    }}>
+                    {copied ? '✅ คัดลอกแล้ว' : '📋 คัดลอก'}
                   </button>
                 </div>
                 <div style={{fontSize:11, color:'var(--text-3)', marginTop:6}}>
@@ -429,15 +435,24 @@ function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
 
           {history.length > 0 && (
             <div style={{marginTop:14}}>
-              <div style={{fontSize:12, fontWeight:600, color:'var(--text-3)', marginBottom:7}}>📋 ประวัติการสร้างลิ้ง</div>
-              <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                {history.map(log => (
-                  <div key={log.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:12, padding:'7px 11px', background:'var(--surface-2)', borderRadius:7, border:'1px solid var(--border)'}}>
-                    <span style={{color:'var(--text-2)'}}>🕐 {fmtDateTime(log.created_at)}</span>
-                    <span style={{color:'var(--text-3)'}}>โดย {log.generated_by_name}</span>
-                  </div>
-                ))}
-              </div>
+              <button
+                onClick={() => setHistoryOpen(v => !v)}
+                style={{display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', padding:'4px 0', width:'100%', textAlign:'left'}}
+              >
+                <span style={{fontSize:12, fontWeight:600, color:'var(--text-3)'}}>📋 ประวัติการสร้างลิ้ง</span>
+                <span style={{fontSize:11, background:'var(--surface-2)', border:'1px solid var(--border)', borderRadius:999, padding:'1px 7px', color:'var(--text-3)', fontWeight:600}}>{history.length}</span>
+                <span style={{marginLeft:'auto', fontSize:11, color:'var(--text-3)', transition:'transform 0.2s', display:'inline-block', transform: historyOpen ? 'rotate(180deg)' : 'rotate(0deg)'}}>▾</span>
+              </button>
+              {historyOpen && (
+                <div style={{display:'flex', flexDirection:'column', gap:4, marginTop:6}}>
+                  {history.map(log => (
+                    <div key={log.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:12, padding:'7px 11px', background:'var(--surface-2)', borderRadius:7, border:'1px solid var(--border)'}}>
+                      <span style={{color:'var(--text-2)'}}>🕐 {fmtDateTime(log.created_at)}</span>
+                      <span style={{color:'var(--text-3)'}}>โดย {log.generated_by_name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
