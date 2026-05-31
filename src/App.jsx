@@ -757,7 +757,15 @@ function App() {
         onLogout={confirmLogout}
         onCmdOpen={() => setCmdOpen(true)}
       />
-      <main className="main">
+      {maintenanceMode && currentUser.role === 'admin' && (
+        <div className="maintenance-banner-fixed" style={{position:'fixed',top:'var(--topbar-h)',left:'var(--sidebar-w)',right:0,zIndex:45,background:'#7c2d00',color:'#fed7aa',padding:'8px 20px',display:'flex',alignItems:'center',gap:10,fontSize:13,flexWrap:'wrap'}}>
+          <span style={{fontSize:15}}>🔧</span>
+          <span style={{fontWeight:600}}>ระบบอยู่ในโหมดบำรุงรักษา</span>
+          <span style={{opacity:0.8}}>— ผู้ใช้ทั่วไปไม่สามารถเข้าใช้งานได้</span>
+          <button className="btn sm" style={{marginLeft:'auto',background:'#fed7aa',color:'#7c2d00',fontWeight:600,fontSize:12}} onClick={() => setConfirm({ kind:'primary', title:'เปิดระบบใช้งาน?', message:'ผู้ใช้ทุกคนจะสามารถเข้าใช้งานระบบได้ตามปกติ', onConfirm: () => handleSetMaintenanceMode(false) })}>เปิดระบบ</button>
+        </div>
+      )}
+      <main className={`main${maintenanceMode && currentUser.role === 'admin' ? ' has-maintenance-banner' : ''}`}>
         {/* Maintenance mode: block non-admins, warn admin */}
         {maintenanceMode && currentUser.role !== 'admin' && (
           <div style={{position:'fixed',inset:0,zIndex:4000,background:'var(--bg)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,padding:24,textAlign:'center'}}>
@@ -775,14 +783,6 @@ function App() {
               </div>
             )}
             <p style={{margin:0,fontSize:12,color:'var(--text-3)'}}>หากมีข้อสงสัยกรุณาติดต่อผู้ดูแลระบบ</p>
-          </div>
-        )}
-        {maintenanceMode && currentUser.role === 'admin' && (
-          <div className="maintenance-banner" style={{background:'#7c2d00',color:'#fed7aa',padding:'10px 20px',display:'flex',alignItems:'center',gap:10,fontSize:13,flexWrap:'wrap',position:'sticky',top:0,zIndex:10,margin:'-24px -28px 16px'}}>
-            <span style={{fontSize:16}}>🔧</span>
-            <span style={{fontWeight:600}}>ระบบอยู่ในโหมดบำรุงรักษา</span>
-            <span style={{opacity:0.8}}>— ผู้ใช้ทั่วไปไม่สามารถเข้าใช้งานได้ขณะนี้</span>
-            <button className="btn sm" style={{marginLeft:'auto',background:'#fed7aa',color:'#7c2d00',fontWeight:600,fontSize:12}} onClick={() => setConfirm({ kind:'primary', title:'เปิดระบบใช้งาน?', message:'ผู้ใช้ทุกคนจะสามารถเข้าใช้งานระบบได้ตามปกติ', onConfirm: () => handleSetMaintenanceMode(false) })}>เปิดระบบ</button>
           </div>
         )}
         {route === "dashboard" && <Dashboard user={currentUser} vehicles={vehicles} bookings={bookings} users={users} setRoute={setRoute} onSelectVehicle={(v) => setSelectedVehicle(v)} demoEnabled={demoEnabled} onDemoBooking={handleDemoBooking}/>}
