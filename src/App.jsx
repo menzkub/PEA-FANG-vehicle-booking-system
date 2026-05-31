@@ -41,9 +41,11 @@ function App() {
   const [mileageCorrections, setMileageCorrections] = React.useState([]);
   const [departments, setDepartments] = React.useState([]);
   const [appConfig, setAppConfig] = React.useState({ checklist: null, vehicleTypes: null, fuelTypes: null, purposes: null, fuelPrices: null, syncSchedule: null });
-  const [recoveryMode, setRecoveryMode] = React.useState(() =>
-    window.location.hash.includes('type=recovery')
-  );
+  const [recoveryMode, setRecoveryMode] = React.useState(() => {
+    const flag = sessionStorage.getItem('pea-recovery') === '1';
+    if (flag) sessionStorage.removeItem('pea-recovery');
+    return flag;
+  });
 
   const [route, setRoute] = React.useState("dashboard");
   const [selectedVehicle, setSelectedVehicle] = React.useState(null);
@@ -78,12 +80,11 @@ function App() {
   // ── Init: restore session on page refresh ──
   React.useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const isRecovery = window.location.hash.includes('type=recovery');
+      const isRecovery = sessionStorage.getItem('pea-recovery') === '1'
+        || recoveryMode;
       if (session && !isRecovery) await initUser(session.user.id);
-      if (!isRecovery) {
-        setLoaderFading(true);
-        setTimeout(() => setAppReady(true), 420);
-      }
+      setLoaderFading(true);
+      setTimeout(() => setAppReady(true), 420);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'PASSWORD_RECOVERY') {

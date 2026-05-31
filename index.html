@@ -13,6 +13,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Must run before ES modules load — Supabase clears the hash during init
+      if (window.location.hash.includes('type=recovery')) {
+        sessionStorage.setItem('pea-recovery', '1');
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
