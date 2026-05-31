@@ -450,7 +450,7 @@ function fmtDate(iso) {
 function fmtDateTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) + " " +
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) + " " +
          d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
 }
 function fmtTime(iso) {

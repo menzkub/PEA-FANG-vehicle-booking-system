@@ -160,24 +160,32 @@ function LoginLegendPopup() {
         ?
       </button>
       {open && (
-        <div style={{position:'absolute', top:'calc(100% + 6px)', left:'50%', transform:'translateX(-50%)', zIndex:200, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, boxShadow:'0 8px 24px rgba(0,0,0,0.15)', padding:'14px 16px', width:230, fontSize:12.5}}>
+        <div style={{position:'fixed', zIndex:9999, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,0.18)', padding:'14px 16px', width:240, fontSize:12.5}}
+          ref={node => {
+            if (!node) return;
+            const btn = ref.current?.querySelector('button');
+            if (!btn) return;
+            const r = btn.getBoundingClientRect();
+            node.style.top = (r.bottom + 6) + 'px';
+            node.style.left = Math.min(r.left, window.innerWidth - 256) + 'px';
+          }}>
           <div style={{fontWeight:700, marginBottom:10, color:'var(--text)'}}>สีแสดงสถานะ Login</div>
-          <div style={{display:'flex', flexDirection:'column', gap:8}}>
+          <div style={{display:'flex', flexDirection:'column', gap:9}}>
             <div style={{display:'flex', alignItems:'center', gap:8}}>
-              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--ok)', flexShrink:0, boxShadow:'0 0 4px var(--ok)'}}/>
-              <span style={{color:'var(--text-2)'}}>เขียว — Login ภายใน 7 วัน</span>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'#22c55e', flexShrink:0, boxShadow:'0 0 5px #22c55e'}}/>
+              <span style={{color:'var(--text-2)'}}>Login ภายใน 7 วัน</span>
             </div>
             <div style={{display:'flex', alignItems:'center', gap:8}}>
-              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--warn)', flexShrink:0}}/>
-              <span style={{color:'var(--text-2)'}}>เหลือง — Login 7–30 วันที่แล้ว</span>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'#eab308', flexShrink:0}}/>
+              <span style={{color:'var(--text-2)'}}>Login 7–30 วันที่แล้ว</span>
             </div>
             <div style={{display:'flex', alignItems:'center', gap:8}}>
-              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--text-3)', flexShrink:0}}/>
-              <span style={{color:'var(--text-2)'}}>เทา — ไม่ได้ Login เกิน 30 วัน</span>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'#94a3b8', flexShrink:0}}/>
+              <span style={{color:'var(--text-2)'}}>ไม่ได้ Login เกิน 30 วัน</span>
             </div>
             <div style={{display:'flex', alignItems:'center', gap:8}}>
-              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--warn)', flexShrink:0, border:'1px solid var(--warn)'}}/>
-              <span style={{color:'var(--text-2)'}}>ตัวหนา — ยังไม่เคย Login เลย</span>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'#ef4444', flexShrink:0}}/>
+              <span style={{color:'var(--text-2)'}}>ยังไม่เคย Login เลย</span>
             </div>
           </div>
           <div style={{marginTop:10, paddingTop:10, borderTop:'1px solid var(--border)', fontSize:11.5, color:'var(--text-3)', lineHeight:1.6}}>
@@ -338,11 +346,11 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
                     {(() => {
                       const l = lastLogins[u.id];
                       if (!l) return <span style={{color:'var(--text-3)'}}>—</span>;
-                      if (!l.last_sign_in_at) return <span style={{fontSize:11.5, color:'var(--warn)', fontWeight:600}}>ยังไม่เคย login</span>;
+                      if (!l.last_sign_in_at) return <span style={{display:'inline-flex', alignItems:'center', gap:5}}><span style={{width:8, height:8, borderRadius:'50%', background:'#ef4444', flexShrink:0}}/><span style={{fontSize:11.5, color:'#ef4444', fontWeight:600}}>ยังไม่เคย login</span></span>;
                       const d = new Date(l.last_sign_in_at);
                       const daysAgo = Math.floor((Date.now() - d) / 86400000);
-                      const color = daysAgo > 30 ? 'var(--text-3)' : daysAgo > 7 ? 'var(--warn)' : 'var(--ok)';
-                      return <span style={{color, fontSize:12}}>{fmtDateTime(l.last_sign_in_at)}</span>;
+                      const color = daysAgo > 30 ? '#94a3b8' : daysAgo > 7 ? '#eab308' : '#22c55e';
+                      return <span style={{display:'inline-flex', alignItems:'center', gap:5}}><span style={{width:8, height:8, borderRadius:'50%', background:color, flexShrink:0}}/><span style={{color:'var(--text-1)', fontSize:12}}>{fmtDateTime(l.last_sign_in_at)}</span></span>;
                     })()}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
