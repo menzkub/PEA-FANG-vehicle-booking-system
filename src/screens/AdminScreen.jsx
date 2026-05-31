@@ -484,7 +484,7 @@ function MemberDetailModal({ user, loginInfo, onClose, onEdit, onApprove, onReje
   }
 
   return (
-    <Modal title="ข้อมูลสมาชิก" onClose={() => { setGenLink(null); onClose(); }} width={520}
+    <Modal title="ข้อมูลสมาชิก" onClose={() => { setGenLink(null); onClose(); }} width={520} noOutsideClose
       footer={<>
         <button className="btn" onClick={() => { setGenLink(null); onClose(); }}>ปิด</button>
         {onApprove && <button className="btn sm danger" style={{padding:'8px 14px'}} onClick={onReject}>{I.x} ปฏิเสธ</button>}
@@ -608,7 +608,7 @@ function MemberEditModal({ user, onClose, onSave, departments }) {
   });
 
   return (
-    <Modal title={`แก้ไขข้อมูลสมาชิก · ${user.name}`} onClose={onClose} width={580}
+    <Modal title={`แก้ไขข้อมูลสมาชิก · ${user.name}`} onClose={onClose} width={580} noOutsideClose
       footer={<>
         <button className="btn" onClick={onClose}>ยกเลิก</button>
         <button className="btn primary" onClick={() => onSave(form)}>{I.check} บันทึก</button>
