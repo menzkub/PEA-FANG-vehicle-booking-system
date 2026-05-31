@@ -770,7 +770,7 @@ function App() {
         onCmdOpen={() => setCmdOpen(true)}
       />
       {maintenanceMode && currentUser.role === 'admin' && (
-        <div className="maintenance-banner-fixed" style={{position:'fixed',top:'var(--topbar-h)',left:'var(--sidebar-w)',right:0,zIndex:45,background:'#7c2d00',color:'#fed7aa',padding:'8px 20px',display:'flex',alignItems:'center',gap:10,fontSize:13,flexWrap:'wrap'}}>
+        <div className="maintenance-banner-fixed">
           <span style={{fontSize:15}}>🔧</span>
           <span style={{fontWeight:600}}>ระบบอยู่ในโหมดบำรุงรักษา</span>
           <span style={{opacity:0.8}}>— ผู้ใช้ทั่วไปไม่สามารถเข้าใช้งานได้</span>

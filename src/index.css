@@ -442,7 +442,23 @@ a { color: inherit; text-decoration: none; }
 .main.has-maintenance-banner { padding-top: calc(24px + 37px); }
 
 /* Maintenance banner (fixed, always visible for admin) */
-.maintenance-banner-fixed { box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+/* Maintenance banner — fixed below topbar, respects sidebar width */
+.maintenance-banner-fixed {
+  position: fixed;
+  top: 60px;           /* --topbar-h desktop */
+  left: 240px;         /* --sidebar-w desktop */
+  right: 0;
+  z-index: 45;
+  background: #7c2d00;
+  color: #fed7aa;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
 
 /* Common */
 .card {
@@ -881,6 +897,7 @@ a { color: inherit; text-decoration: none; }
 /* Tablet — icon-only sidebar */
 @media (max-width: 980px) {
   :root { --sidebar-w: 68px; }
+  .maintenance-banner-fixed { left: 68px; }
   .sidebar { padding: 14px 8px; }
   .sidebar .nav-text, .sidebar .nav-section, .sidebar .brand-text, .sidebar .role-meta, .sidebar .badge { display: none; }
   .sidebar .nav-item { justify-content: center; padding: 11px; position: relative; }
@@ -906,6 +923,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 720px) {
   :root { --sidebar-w: 0px; --topbar-h: 56px; }
   .app { grid-template-columns: 1fr; grid-template-areas: "top" "main"; }
+  .maintenance-banner-fixed { left: 0; top: 56px; }
   .sidebar {
     position: fixed;
     left: 0; top: 0; bottom: 0;
