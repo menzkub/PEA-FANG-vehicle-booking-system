@@ -2,6 +2,20 @@ import React from 'react'
 
 const CHANGELOG = [
   {
+    version: '1.2.0',
+    date: '31 พ.ค. 2569',
+    changes: [
+      { icon: '⚡', text: 'Supabase Edge Function: sync ราคาน้ำมัน PTT อัตโนมัติรายวัน (pg_cron)' },
+      { icon: '⏰', text: 'Admin ตั้งเวลา sync ราคาน้ำมันได้เองจากหน้าตั้งค่า (0–23 น.)' },
+      { icon: '🔑', text: 'หน้าตั้งรหัสผ่านใหม่ (PASSWORD_RECOVERY callback) สวยงาม' },
+      { icon: '🔗', text: 'Admin สร้างลิ้งตั้งรหัสผ่านให้สมาชิกได้จากในแอป (ไม่ต้องใช้อีเมล)' },
+      { icon: '🏷️', text: 'Build info: version, git commit, เวลา build + status dot (GitHub API)' },
+      { icon: '🐛', text: 'แก้ลืมรหัสผ่าน: RLS บล็อก anon query profiles (ใช้ RPC แทน)' },
+      { icon: '🐛', text: 'แก้ maintenance banner ไม่เห็นบนมือถือ (position:fixed + pixel breakpoints)' },
+      { icon: '🐛', text: 'แก้ profile card สีมองไม่เห็นใน dark mode (gradient ม่วง + text ขาว)' },
+    ],
+  },
+  {
     version: '1.1.0',
     date: '30 พ.ค. 2569',
     changes: [
@@ -40,7 +54,7 @@ export const DEVCARD_DEFAULTS = {
   position: 'พนักงานช่าง ระดับ 5',
   dept: 'แผนกมิเตอร์และหม้อแปลง',
   org: 'การไฟฟ้าส่วนภูมิภาค สาขาฝาง',
-  version: '1.1.0',
+  version: '1.2.0',
   detail1Label: 'ฐานข้อมูล',
   detail1Value: 'PostgreSQL (Supabase) · RLS Multi-tenant',
   detail2Label: 'Tech Stack',

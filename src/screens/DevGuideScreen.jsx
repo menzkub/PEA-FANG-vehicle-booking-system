@@ -626,6 +626,12 @@ npm run preview    # ทดสอบ production build`}</Code>
               { title: 'PTT Fuel Price Sync', desc: 'Admin ซิงค์ราคาน้ำมันจาก api.chnwt.dev/thai-oil-api/latest — map: gasohol_95→gasohol, diesel_b7→diesel, gasoline_95→benzin, ngv→ngv (EV กรอกเอง). บันทึกลง Supabase app_config เพื่อใช้คำนวณในรายงาน', file: 'SettingsScreen.jsx → syncFuelPricesFromPTT · DataSettings fuelPrices tab' },
               { title: 'Fuel Sync History Log', desc: 'บันทึกทุก sync (success/fail) ลง pea-fuel-sync-log (array {at, ok, note, prices}) เก็บสูงสุด 50 รายการ — แสดงเป็น collapsible timeline พร้อมราคาที่ดึงมาแต่ละครั้ง', file: 'SettingsScreen.jsx → DataSettings fuelPrices tab · fpSyncLog state' },
               { title: 'DateTimePicker (Thai calendar)', desc: 'Custom date-time picker แทน native datetime-local — grid ปฏิทินไทย (วัน/เดือน/ปี พ.ศ.) + scroll เลือกชั่วโมง/นาที, responsive, ใช้ใน maintenance schedule', file: 'SettingsScreen.jsx → DateTimePicker component' },
+              { title: 'Edge Function: sync-fuel-prices', desc: 'Deno Edge Function fetch PTT API แล้ว upsert app_config[fuel_prices]. ใช้ SUPABASE_SERVICE_ROLE_KEY (auto-inject). pg_cron รันทุกชั่วโมง → SQL function check_and_sync_fuel_prices() ตรวจชั่วโมง ICT จาก app_config[sync_schedule]', file: 'supabase/functions/sync-fuel-prices/index.ts · migrations/20260531_app_config_and_cron.sql' },
+              { title: 'Admin Sync Schedule', desc: 'Admin ตั้งชั่วโมง sync ราคาน้ำมันได้ (0–23 น.) ผ่าน dropdown ใน Settings → ราคาเชื้อเพลิง → บันทึกลง app_config[sync_schedule]{hour:N}. pg_cron อ่านค่าใหม่อัตโนมัติรอบต่อไป ไม่ต้องแตะ cron', file: 'SettingsScreen.jsx → DataSettings → syncHour state · saveSyncSchedule()' },
+              { title: 'Build Info + Status Dot', desc: 'vite.config.js inject __GIT_COMMIT__, __BUILD_TIME__, __APP_VERSION__ ตอน build. Settings → Account แสดง commit hash + build time + status dot: เขียว=ตรงกับ GitHub HEAD, เหลือง=มี commit ใหม่รอ deploy, เทา=ตรวจไม่ได้', file: 'vite.config.js → define · SettingsScreen.jsx → BuildInfo component' },
+              { title: 'Reset Password Screen', desc: 'supabase.auth.onAuthStateChange จับ PASSWORD_RECOVERY event → render ResetPasswordScreen แทน app ปกติ. หน้าสวยงาม: purple gradient, password strength bar, show/hide toggle, confirm match. หลังสำเร็จ signOut + กลับ login', file: 'App.jsx → recoveryMode state · ResetPasswordScreen component' },
+              { title: 'Admin Generate Reset Link', desc: 'Edge Function generate-reset-link: verify JWT caller เป็น admin → supabase.auth.admin.generateLink({type:"recovery"}) ไม่ส่งอีเมล ได้ link กลับมา. Frontend: ปุ่ม "🔗 สร้างลิ้ง" ใน MemberDetailModal → copy ส่งทาง LINE. ข้าม email rate limit + fake domain', file: 'supabase/functions/generate-reset-link/index.ts · AdminScreen.jsx → MemberDetailModal' },
+              { title: 'check_emp_exists RPC', desc: 'SQL function SECURITY DEFINER ข้าม RLS — รับ emp_id คืน {found, name, email}. AuthScreen doForgot() ใช้แทน direct table query เพราะ anon user ไม่มีสิทธิ์ SELECT profiles (RLS TO authenticated)', file: 'Supabase SQL → check_emp_exists() · AuthScreen.jsx → doForgot()' },
             ].map(({ title, desc, file }) => (
               <div key={title} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{title}</div>
@@ -645,7 +651,22 @@ npm run preview    # ทดสอบ production build`}</Code>
 
           {[
             {
-              version: 'v1.1.0', date: '30 พ.ค. 2569', latest: true,
+              version: 'v1.2.0', date: '31 พ.ค. 2569', latest: true,
+              changes: [
+                { tag: 'feat', text: 'Supabase Edge Function sync-fuel-prices: pg_cron รันทุกชั่วโมง, SQL function ตรวจชั่วโมง ICT จาก app_config ก่อน trigger' },
+                { tag: 'feat', text: 'Admin ตั้งเวลา sync ราคาน้ำมันได้ (0–23 น.) ผ่าน Settings → บันทึกลง app_config[sync_schedule]' },
+                { tag: 'feat', text: 'Reset password screen สวยงาม (PASSWORD_RECOVERY event) + password strength indicator' },
+                { tag: 'feat', text: 'Edge Function generate-reset-link: admin สร้างลิ้งให้สมาชิกจากในแอป ไม่ต้องส่งอีเมล' },
+                { tag: 'feat', text: 'Build info display: version, git commit hash, build time ใน Settings → Account' },
+                { tag: 'feat', text: 'Build status dot: เขียว/เหลือง/เทา ตรวจสอบกับ GitHub API realtime' },
+                { tag: 'feat', text: 'app_config table: เพิ่ม sync_schedule key + SQL migration + pg_cron setup' },
+                { tag: 'fix',  text: 'ลืมรหัสผ่าน: RLS บล็อก anon SELECT profiles → ใช้ check_emp_exists() RPC (SECURITY DEFINER)' },
+                { tag: 'fix',  text: 'Maintenance banner บนมือถือ: เปลี่ยนเป็น position:fixed + hardcode pixel per breakpoint แทน CSS var ใน inline style' },
+                { tag: 'fix',  text: 'Profile card dark mode: ใช้ purple gradient + explicit white text (เดิมใช้ pea-purple-50 ที่มืดมากใน dark mode)' },
+              ]
+            },
+            {
+              version: 'v1.1.0', date: '30 พ.ค. 2569', latest: false,
               changes: [
                 { tag: 'feat', text: 'Sidebar dark purple gradient (always-on, ทั้ง light + dark mode)' },
                 { tag: 'feat', text: 'Dashboard topbar: gradient text h1 (purple→orange) + วันที่เด่นชัด' },
