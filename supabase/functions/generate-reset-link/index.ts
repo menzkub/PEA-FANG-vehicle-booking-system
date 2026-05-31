@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
     return new Response("Method not allowed", { status: 405, headers: CORS });
   }
 
-  // Verify caller is authenticated admin
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return new Response("Unauthorized", { status: 401, headers: CORS });
 
@@ -19,7 +18,6 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  // Check caller's JWT — must be an admin profile
   const callerClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
@@ -27,13 +25,13 @@ Deno.serve(async (req) => {
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
-  const { data: profile } = await adminClient
+  const { data: adminProfile } = await adminClient
     .from("profiles")
-    .select("role")
+    .select("role, name, emp")
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (adminProfile?.role !== "admin") {
     return new Response("Forbidden: admin only", { status: 403, headers: CORS });
   }
 
@@ -63,6 +61,14 @@ Deno.serve(async (req) => {
       status: 500, headers: { ...CORS, "Content-Type": "application/json" },
     });
   }
+
+  // Log the reset link generation
+  await adminClient.from("reset_link_logs").insert({
+    target_emp: emp,
+    target_name: targetProfile.name,
+    generated_by_emp: adminProfile.emp,
+    generated_by_name: adminProfile.name,
+  });
 
   return new Response(
     JSON.stringify({ link: data.properties.action_link, name: targetProfile.name }),

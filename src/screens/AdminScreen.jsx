@@ -316,7 +316,22 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
 // ─── Member Detail Modal ──────────────────────────────────────────
 function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
   const [genLink, setGenLink] = React.useState(null);   // { link, name } | 'loading' | { error }
+  const [history, setHistory] = React.useState([]);
   const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-reset-link`;
+
+  async function fetchHistory() {
+    const { data } = await supabase
+      .from('reset_link_logs')
+      .select('*')
+      .eq('target_emp', user.emp)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    setHistory(data || []);
+  }
+
+  React.useEffect(() => {
+    if (user.status === 'approved') fetchHistory();
+  }, [user.emp]);
 
   async function generateResetLink() {
     setGenLink('loading');
@@ -330,6 +345,7 @@ function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'เกิดข้อผิดพลาด');
       setGenLink(json);
+      fetchHistory();
     } catch (e) {
       setGenLink({ error: e.message });
     }
@@ -409,6 +425,20 @@ function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
                 </div>
               </div>
             )
+          )}
+
+          {history.length > 0 && (
+            <div style={{marginTop:14}}>
+              <div style={{fontSize:12, fontWeight:600, color:'var(--text-3)', marginBottom:7}}>📋 ประวัติการสร้างลิ้ง</div>
+              <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                {history.map(log => (
+                  <div key={log.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:12, padding:'7px 11px', background:'var(--surface-2)', borderRadius:7, border:'1px solid var(--border)'}}>
+                    <span style={{color:'var(--text-2)'}}>🕐 {fmtDateTime(log.created_at)}</span>
+                    <span style={{color:'var(--text-3)'}}>โดย {log.generated_by_name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
