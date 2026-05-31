@@ -41,6 +41,7 @@ function App() {
   const [mileageCorrections, setMileageCorrections] = React.useState([]);
   const [departments, setDepartments] = React.useState([]);
   const [appConfig, setAppConfig] = React.useState({ checklist: null, vehicleTypes: null, fuelTypes: null, purposes: null, fuelPrices: null, syncSchedule: null });
+  const [recoveryMode, setRecoveryMode] = React.useState(false);
 
   const [route, setRoute] = React.useState("dashboard");
   const [selectedVehicle, setSelectedVehicle] = React.useState(null);
@@ -80,8 +81,15 @@ function App() {
       setTimeout(() => setAppReady(true), 420);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryMode(true);
+        setLoaderFading(true);
+        setTimeout(() => setAppReady(true), 420);
+        return;
+      }
       if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
+        setRecoveryMode(false);
         setVehicles([]); setBookings([]); setUsers([]);
         setVehicleHistory([]); setMileageCorrections([]); setDepartments([]);
       }
@@ -722,6 +730,10 @@ function App() {
     );
   }
 
+  if (recoveryMode) {
+    return <ResetPasswordScreen onDone={async () => { await supabase.auth.signOut(); setRecoveryMode(false); }}/>;
+  }
+
   if (!currentUser) {
     return <AuthScreen registered={registered} onLogin={handleLogin} onRegister={handleRegister} departments={departments}/>;
   }
@@ -900,6 +912,124 @@ function Mini({ lbl, val }) {
     <div style={{background:'var(--surface-2)', borderRadius:8, padding:'9px 12px'}}>
       <div style={{fontSize:11, color:'var(--text-3)'}}>{lbl}</div>
       <div style={{fontWeight:600, fontSize:13}}>{val}</div>
+    </div>
+  );
+}
+
+// ─── Reset Password Screen ──────────────────────────────────────────
+function ResetPasswordScreen({ onDone }) {
+  const [pw, setPw] = React.useState('');
+  const [confirm, setConfirm] = React.useState('');
+  const [showPw, setShowPw] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [done, setDone] = React.useState(false);
+  const [err, setErr] = React.useState('');
+
+  const strength = pw.length === 0 ? null
+    : pw.length < 6 ? { label: 'สั้นเกินไป', color: '#ef4444', pct: 25 }
+    : pw.length < 8 ? { label: 'อ่อน', color: '#f97316', pct: 50 }
+    : /[A-Z]/.test(pw) && /[0-9]/.test(pw) ? { label: 'แข็งแกร่ง', color: '#22c55e', pct: 100 }
+    : { label: 'ปานกลาง', color: '#eab308', pct: 75 };
+
+  async function save() {
+    setErr('');
+    if (pw.length < 8) { setErr('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร'); return; }
+    if (pw !== confirm) { setErr('รหัสผ่านไม่ตรงกัน'); return; }
+    setSaving(true);
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    setSaving(false);
+    if (error) { setErr('เกิดข้อผิดพลาด: ' + error.message); return; }
+    setDone(true);
+  }
+
+  return (
+    <div style={{minHeight:'100vh', background:'linear-gradient(135deg, #1e0d33 0%, #4D1F66 50%, #6E2A8C 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:20}}>
+      <div style={{width:'100%', maxWidth:440}}>
+        {/* Logo */}
+        <div style={{textAlign:'center', marginBottom:32}}>
+          <div style={{width:60, height:60, borderRadius:16, background:'#F37021', display:'inline-flex', alignItems:'center', justifyContent:'center', marginBottom:12, boxShadow:'0 8px 24px rgba(243,112,33,0.4)'}}>
+            <span style={{fontSize:28}}>🔑</span>
+          </div>
+          <div style={{color:'white', fontSize:22, fontWeight:700, letterSpacing:-0.5}}>ตั้งรหัสผ่านใหม่</div>
+          <div style={{color:'rgba(255,255,255,0.6)', fontSize:13, marginTop:4}}>EasyDrive · การไฟฟ้าส่วนภูมิภาค สาขาฝาง</div>
+        </div>
+
+        <div style={{background:'white', borderRadius:20, padding:32, boxShadow:'0 24px 64px rgba(0,0,0,0.3)'}}>
+          {done ? (
+            <div style={{textAlign:'center', padding:'8px 0'}}>
+              <div style={{fontSize:56, marginBottom:16}}>✅</div>
+              <div style={{fontSize:18, fontWeight:700, marginBottom:8}}>เปลี่ยนรหัสผ่านสำเร็จ</div>
+              <div style={{fontSize:13, color:'#64748b', marginBottom:24}}>กรุณา login ด้วยรหัสผ่านใหม่ของคุณ</div>
+              <button onClick={onDone} style={{width:'100%', padding:'13px', borderRadius:12, background:'linear-gradient(135deg, #4D1F66, #6E2A8C)', color:'white', border:'none', fontWeight:700, fontSize:15, cursor:'pointer'}}>
+                กลับหน้า Login
+              </button>
+            </div>
+          ) : (
+            <div style={{display:'flex', flexDirection:'column', gap:18}}>
+              <div>
+                <div style={{fontSize:13, color:'#475569', marginBottom:6, fontWeight:500}}>รหัสผ่านใหม่ *</div>
+                <div style={{position:'relative'}}>
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    value={pw}
+                    onChange={e => setPw(e.target.value)}
+                    placeholder="อย่างน้อย 8 ตัวอักษร"
+                    style={{width:'100%', padding:'12px 44px 12px 14px', borderRadius:10, border:'1.5px solid #e2e8f0', fontSize:14, outline:'none', boxSizing:'border-box', transition:'border-color 0.15s'}}
+                    onFocus={e => e.target.style.borderColor='#6E2A8C'}
+                    onBlur={e => e.target.style.borderColor='#e2e8f0'}
+                  />
+                  <button onClick={() => setShowPw(v => !v)} style={{position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#94a3b8', fontSize:16}}>
+                    {showPw ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {strength && (
+                  <div style={{marginTop:6}}>
+                    <div style={{height:4, borderRadius:2, background:'#f1f5f9', overflow:'hidden'}}>
+                      <div style={{height:'100%', width:`${strength.pct}%`, background:strength.color, borderRadius:2, transition:'width 0.3s, background 0.3s'}}/>
+                    </div>
+                    <div style={{fontSize:11, color:strength.color, marginTop:3, fontWeight:500}}>{strength.label}</div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div style={{fontSize:13, color:'#475569', marginBottom:6, fontWeight:500}}>ยืนยันรหัสผ่าน *</div>
+                <input
+                  type="password"
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && save()}
+                  placeholder="กรอกรหัสผ่านอีกครั้ง"
+                  style={{width:'100%', padding:'12px 14px', borderRadius:10, border:`1.5px solid ${confirm && confirm !== pw ? '#ef4444' : '#e2e8f0'}`, fontSize:14, outline:'none', boxSizing:'border-box'}}
+                  onFocus={e => e.target.style.borderColor = confirm && confirm !== pw ? '#ef4444' : '#6E2A8C'}
+                  onBlur={e => e.target.style.borderColor = confirm && confirm !== pw ? '#ef4444' : '#e2e8f0'}
+                />
+                {confirm && pw !== confirm && (
+                  <div style={{fontSize:11.5, color:'#ef4444', marginTop:3}}>รหัสผ่านไม่ตรงกัน</div>
+                )}
+              </div>
+
+              {err && (
+                <div style={{padding:'10px 14px', borderRadius:10, background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', fontSize:13}}>
+                  ⚠️ {err}
+                </div>
+              )}
+
+              <button
+                onClick={save}
+                disabled={saving || pw.length < 8 || pw !== confirm}
+                style={{width:'100%', padding:'13px', borderRadius:12, background: saving || pw.length < 8 || pw !== confirm ? '#e2e8f0' : 'linear-gradient(135deg, #4D1F66, #6E2A8C)', color: saving || pw.length < 8 || pw !== confirm ? '#94a3b8' : 'white', border:'none', fontWeight:700, fontSize:15, cursor: saving || pw.length < 8 || pw !== confirm ? 'not-allowed' : 'pointer', transition:'all 0.2s'}}
+              >
+                {saving ? '⏳ กำลังบันทึก...' : '🔒 บันทึกรหัสผ่านใหม่'}
+              </button>
+
+              <div style={{textAlign:'center', fontSize:12, color:'#94a3b8'}}>
+                ลิงก์นี้ใช้ได้ครั้งเดียวและหมดอายุภายใน 1 ชั่วโมง
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
