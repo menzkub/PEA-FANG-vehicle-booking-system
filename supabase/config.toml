@@ -1,0 +1,5 @@
+[project]
+id = "hrwscuswqrhjqlquhswy"
+
+[functions.sync-fuel-prices]
+verify_jwt = false
