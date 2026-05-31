@@ -31,6 +31,7 @@ function AuthScreen({ onLogin, registered, onRegister, departments }) {
   const [err, setErr] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [forgotEmail, setForgotEmail] = React.useState("");
+  const [forgotProfile, setForgotProfile] = React.useState(null);
 
   const [showPw, setShowPw] = React.useState(false);
   const [showRegPw, setShowRegPw] = React.useState(false);
@@ -140,10 +141,18 @@ function AuthScreen({ onLogin, registered, onRegister, departments }) {
     setErr("");
     if (!forgotEmail.trim()) { setErr("กรุณากรอกรหัสพนักงาน"); return; }
     setLoading(true);
-    const email = `${forgotEmail.trim()}@easydrive.local`;
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    // ตรวจสอบว่ารหัสพนักงานมีในระบบจริง
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, email')
+      .eq('emp', forgotEmail.trim())
+      .single();
     setLoading(false);
-    if (error) { setErr("ไม่พบบัญชีนี้ในระบบ"); return; }
+    if (!profile) {
+      setErr(`ไม่พบรหัสพนักงาน "${forgotEmail.trim()}" ในระบบ กรุณาตรวจสอบรหัสพนักงานอีกครั้ง`);
+      return;
+    }
+    setForgotProfile(profile);
     setMode("forgot-sent");
   }
 
@@ -405,43 +414,54 @@ function AuthScreen({ onLogin, registered, onRegister, departments }) {
               </div>
               <h2 style={{fontSize:24, fontWeight:700, margin:'0 0 4px', letterSpacing:'-0.01em'}}>ลืมรหัสผ่าน</h2>
               <p className="muted" style={{margin:'0 0 22px', fontSize:13.5}}>
-                กรอกรหัสพนักงานที่ใช้สมัครบัญชี ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลที่ลงทะเบียนไว้
+                กรอกรหัสพนักงานเพื่อให้ระบบตรวจสอบบัญชี จากนั้นติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่าน
               </p>
               <div className="col gap-3">
                 <div className="field">
                   <label className="field-lbl">รหัสพนักงาน <span className="req">*</span></label>
-                  <input className="input" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="เช่น 63xxx" autoFocus/>
+                  <input className="input" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="เช่น 63xxx" autoFocus
+                    onKeyDown={e => e.key === 'Enter' && doForgot()}/>
                 </div>
                 {err && <div className="input-err">{err}</div>}
                 <button className="btn primary lg" onClick={doForgot} disabled={loading}>
-                  {loading ? "กำลังส่ง..." : <>{I.upload} ส่งลิงก์รีเซ็ตรหัสผ่าน</>}
+                  {loading ? "กำลังตรวจสอบ..." : <>{I.search} ตรวจสอบบัญชี</>}
                 </button>
-                <div style={{padding:'12px 14px', background:'var(--info-bg)', borderRadius:9, fontSize:12.5, color:'#1e4f88', lineHeight:1.6, marginTop:8}}>
-                  <b>หมายเหตุ:</b> หากท่านไม่ได้รับอีเมลภายใน 10 นาที กรุณาตรวจสอบ Junk/Spam หรือติดต่อผู้ดูแลระบบ
-                  ที่ <a href="tel:053-451-666" style={{color:'var(--pea-purple)', fontWeight:600}}>053-451-666</a> ต่อ 12
-                </div>
               </div>
             </>
           )}
 
-          {mode === "forgot-sent" && (
+          {mode === "forgot-sent" && forgotProfile && (
             <>
-              <div style={{background:'var(--ok-bg)', border:'1px solid #c5e5d2', borderRadius:14, padding:'24px 22px', marginBottom:20}}>
-                <div style={{width:48, height:48, background:'var(--ok)', borderRadius:12, display:'grid', placeItems:'center', color:'white', marginBottom:14}}>
-                  {I.check}
-                </div>
-                <h2 style={{margin:'0 0 6px', fontSize:18, color:'var(--ok)'}}>ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว</h2>
-                <p style={{margin:0, fontSize:13.5, color:'#1f5b3a'}}>
-                  ระบบส่งอีเมลพร้อมลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลที่ลงทะเบียนไว้<br/>
-                  กรุณาตรวจสอบกล่องจดหมายและคลิกลิงก์ภายใน 30 นาที
+              <div style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--text-3)', fontSize:13, cursor:'pointer', marginBottom:14}} onClick={() => { setMode("forgot"); setForgotProfile(null); }}>
+                {I.arrowLeft} ย้อนกลับ
+              </div>
+              <div style={{background:'var(--ok-bg)', border:'1px solid #c5e5d2', borderRadius:14, padding:'20px 20px 18px', marginBottom:16}}>
+                <div style={{width:44, height:44, background:'var(--ok)', borderRadius:11, display:'grid', placeItems:'center', color:'white', marginBottom:12, fontSize:20}}>✓</div>
+                <h2 style={{margin:'0 0 4px', fontSize:17, color:'var(--ok)', fontWeight:700}}>พบบัญชีของคุณแล้ว</h2>
+                <p style={{margin:0, fontSize:13, color:'#1f5b3a'}}>
+                  ชื่อ: <b>{forgotProfile.name}</b> · รหัสพนักงาน: <b>{forgotEmail}</b>
                 </p>
               </div>
-              <button className="btn primary lg" style={{width:'100%'}} onClick={() => { setMode("login"); setForgotEmail(""); }}>
+              <div style={{padding:'16px 18px', background:'var(--info-bg)', borderRadius:12, border:'1px solid #93c5fd', marginBottom:16}}>
+                <div style={{fontWeight:700, fontSize:13.5, color:'#1e40af', marginBottom:10}}>📞 ติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่าน</div>
+                <div style={{fontSize:13, color:'#1e4f88', lineHeight:1.8}}>
+                  แจ้งรหัสพนักงาน <b style={{fontFamily:'var(--font-mono)', background:'rgba(30,64,175,0.1)', padding:'1px 6px', borderRadius:4}}>{forgotEmail}</b> และชื่อของคุณ
+                </div>
+                <div style={{marginTop:10, display:'flex', flexDirection:'column', gap:6}}>
+                  <a href="tel:053451666" style={{display:'flex', alignItems:'center', gap:8, color:'var(--pea-purple)', fontWeight:600, fontSize:13.5, textDecoration:'none'}}>
+                    <span style={{fontSize:16}}>📱</span> 053-451-666 ต่อ 12
+                  </a>
+                  {forgotProfile.email && (
+                    <div style={{fontSize:12.5, color:'var(--text-3)'}}>
+                      หรืออีเมลที่ลงทะเบียน: <b>{forgotProfile.email.replace(/(.{2}).+(@.+)/, '$1***$2')}</b>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button className="btn primary lg" style={{width:'100%'}} onClick={() => { setMode("login"); setForgotEmail(""); setForgotProfile(null); }}>
                 กลับสู่หน้าเข้าสู่ระบบ
               </button>
-              <div style={{textAlign:'center', marginTop:14, fontSize:13, color:'var(--text-2)'}}>
-                ไม่ได้รับอีเมล? <a style={{color:'var(--pea-purple)', fontWeight:600, cursor:'pointer'}} onClick={() => setMode("forgot")}>ส่งใหม่อีกครั้ง</a>
-              </div>
             </>
           )}
 

@@ -626,6 +626,42 @@ function App() {
     setAppConfig(prev => ({ ...prev, [keyMap[key] || key]: value }));
   }
 
+  // ── Auto-sync PTT fuel prices daily at 08:00 (admin only) ──
+  React.useEffect(() => {
+    if (currentUser?.role !== 'admin') return;
+    if (!appConfig.fuelPrices) return; // wait for config to load
+
+    const now = new Date();
+    const today8am = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+    const lastSync = appConfig.fuelPrices?.updatedAt ? new Date(appConfig.fuelPrices.updatedAt) : null;
+    const needsSync = now >= today8am && (!lastSync || lastSync < today8am);
+    if (!needsSync) return;
+
+    (async () => {
+      try {
+        const res = await fetch('https://api.chnwt.dev/thai-oil-api/latest');
+        if (!res.ok) return;
+        const data = await res.json();
+        const ptt = data?.response?.stations?.ptt || data?.response?.stations?.bcp;
+        if (!ptt) return;
+        const mapped = { ...appConfig.fuelPrices };
+        if (ptt.gasohol_95?.price)  mapped.gasohol = parseFloat(ptt.gasohol_95.price);
+        if (ptt.diesel_b7?.price)   mapped.diesel  = parseFloat(ptt.diesel_b7.price);
+        if (ptt.gasoline_95?.price) mapped.benzin  = parseFloat(ptt.gasoline_95.price);
+        if (ptt.ngv?.price)         mapped.ngv     = parseFloat(ptt.ngv.price);
+        mapped.updatedAt = new Date().toISOString();
+        await handleSaveConfig('fuel_prices', mapped);
+        // Log to localStorage
+        const entry = { at: mapped.updatedAt, ok: true, note: 'Auto-sync 08:00 น.', prices: { gasohol: mapped.gasohol, diesel: mapped.diesel, benzin: mapped.benzin, ngv: mapped.ngv } };
+        try {
+          const prev = JSON.parse(localStorage.getItem('pea-fuel-sync-log') || '[]');
+          localStorage.setItem('pea-fuel-sync-log', JSON.stringify([entry, ...prev].slice(0, 50)));
+        } catch (_) {}
+        pushToast({ kind: 'ok', title: '⛽ อัปเดตราคาน้ำมันอัตโนมัติ', body: `ซิงค์ราคาจาก PTT แล้ว (08:00 น.)` });
+      } catch (_) {}
+    })();
+  }, [currentUser?.role, appConfig.fuelPrices?.updatedAt]);
+
   // ── Route guard ──
   React.useEffect(() => {
     if (!currentUser) return;
