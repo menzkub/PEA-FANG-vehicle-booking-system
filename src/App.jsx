@@ -778,7 +778,7 @@ function App() {
           </div>
         )}
         {maintenanceMode && currentUser.role === 'admin' && (
-          <div style={{background:'#7c2d00',color:'#fed7aa',padding:'8px 16px',display:'flex',alignItems:'center',gap:10,fontSize:13,borderRadius:8,marginBottom:12,flexWrap:'wrap'}}>
+          <div className="maintenance-banner" style={{background:'#7c2d00',color:'#fed7aa',padding:'10px 20px',display:'flex',alignItems:'center',gap:10,fontSize:13,flexWrap:'wrap',position:'sticky',top:0,zIndex:10,margin:'-24px -28px 16px'}}>
             <span style={{fontSize:16}}>🔧</span>
             <span style={{fontWeight:600}}>ระบบอยู่ในโหมดบำรุงรักษา</span>
             <span style={{opacity:0.8}}>— ผู้ใช้ทั่วไปไม่สามารถเข้าใช้งานได้ขณะนี้</span>

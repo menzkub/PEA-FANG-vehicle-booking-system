@@ -211,12 +211,12 @@ function AccountSettings({ currentUser, deptNames, onUpdateProfile, pushToast })
   return (
     <div className="col gap-3">
       {/* Profile card */}
-      <div className="profile-card" style={{display:'flex', gap:16, alignItems:'center', padding:'16px 18px', background:'linear-gradient(135deg, var(--pea-purple-50), var(--pea-orange-50))', borderRadius:12}}>
-        <div className="avatar lg" style={{width:64, height:64, fontSize:24, background:'var(--pea-purple)', flexShrink:0}}>{currentUser.name.charAt(0)}</div>
+      <div className="profile-card" style={{display:'flex', gap:16, alignItems:'center', padding:'16px 18px', background:'linear-gradient(135deg, var(--pea-purple-deep), var(--pea-purple))', borderRadius:12, color:'white'}}>
+        <div className="avatar lg" style={{width:64, height:64, fontSize:24, background:'rgba(255,255,255,0.2)', flexShrink:0}}>{currentUser.name.charAt(0)}</div>
         <div style={{flex:1, minWidth:0}}>
-          <div style={{fontSize:18, fontWeight:700, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{currentUser.name}</div>
-          <div className="text-sm muted" style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{currentUser.role === "admin" ? "ผู้ดูแลระบบ" : currentUser.role === "manager" ? "ผู้จัดการ" : "ผู้ใช้งาน"} · {currentUser.dept}</div>
-          <div className="text-xs muted" style={{marginTop:2}}>รหัส {currentUser.emp} · สมาชิกตั้งแต่ {fmtDate(currentUser.joined)}</div>
+          <div style={{fontSize:18, fontWeight:700, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color:'white'}}>{currentUser.name}</div>
+          <div className="text-sm" style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color:'rgba(255,255,255,0.75)'}}>{currentUser.role === "admin" ? "ผู้ดูแลระบบ" : currentUser.role === "manager" ? "ผู้จัดการ" : "ผู้ใช้งาน"} · {currentUser.dept}</div>
+          <div className="text-xs" style={{marginTop:2, color:'rgba(255,255,255,0.6)'}}>รหัส {currentUser.emp} · สมาชิกตั้งแต่ {fmtDate(currentUser.joined)}</div>
         </div>
         <div className="profile-card-actions">
           {!editing
