@@ -144,6 +144,51 @@ function ApprovalCard({ booking, vehicle, user, actor, onApprove, onReject, onSe
 }
 
 // ─── Members screen ────────────────────────────────────────────────
+function LoginLegendPopup() {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+  return (
+    <span ref={ref} style={{position:'relative', display:'inline-flex'}}>
+      <button onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+        style={{width:16, height:16, borderRadius:'50%', background:'var(--pea-purple-100)', border:'1px solid var(--pea-purple-100)', color:'var(--pea-purple)', fontSize:10, fontWeight:700, cursor:'pointer', display:'grid', placeItems:'center', lineHeight:1}}>
+        ?
+      </button>
+      {open && (
+        <div style={{position:'absolute', top:'calc(100% + 6px)', left:'50%', transform:'translateX(-50%)', zIndex:200, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, boxShadow:'0 8px 24px rgba(0,0,0,0.15)', padding:'14px 16px', width:230, fontSize:12.5}}>
+          <div style={{fontWeight:700, marginBottom:10, color:'var(--text)'}}>สีแสดงสถานะ Login</div>
+          <div style={{display:'flex', flexDirection:'column', gap:8}}>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--ok)', flexShrink:0, boxShadow:'0 0 4px var(--ok)'}}/>
+              <span style={{color:'var(--text-2)'}}>เขียว — Login ภายใน 7 วัน</span>
+            </div>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--warn)', flexShrink:0}}/>
+              <span style={{color:'var(--text-2)'}}>เหลือง — Login 7–30 วันที่แล้ว</span>
+            </div>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--text-3)', flexShrink:0}}/>
+              <span style={{color:'var(--text-2)'}}>เทา — ไม่ได้ Login เกิน 30 วัน</span>
+            </div>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <span style={{width:10, height:10, borderRadius:'50%', background:'var(--warn)', flexShrink:0, border:'1px solid var(--warn)'}}/>
+              <span style={{color:'var(--text-2)'}}>ตัวหนา — ยังไม่เคย Login เลย</span>
+            </div>
+          </div>
+          <div style={{marginTop:10, paddingTop:10, borderTop:'1px solid var(--border)', fontSize:11.5, color:'var(--text-3)', lineHeight:1.6}}>
+            หากพนักงานยังไม่เคย login<br/>ให้ admin สร้างลิ้งตั้งรหัสผ่านให้
+          </div>
+        </div>
+      )}
+    </span>
+  );
+}
+
 function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, onChangeRole, onUpdateUser }) {
   const DEPARTMENTS = departments?.length ? departments.map(d => d.name) : DEPT_FALLBACK;
   const [tab, setTab] = React.useState("pending");
@@ -254,7 +299,12 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
                 <th>สังกัด</th>
                 <th>ติดต่อ</th>
                 <th>บทบาท</th>
-                <th>Login ล่าสุด</th>
+                <th>
+                  <span style={{display:'inline-flex', alignItems:'center', gap:5}}>
+                    Login ล่าสุด
+                    <LoginLegendPopup/>
+                  </span>
+                </th>
                 <th></th>
               </tr>
             </thead>
