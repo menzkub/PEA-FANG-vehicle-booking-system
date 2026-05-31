@@ -522,6 +522,9 @@ function MemberDetailModal({ user, loginInfo, onClose, onEdit, onApprove, onReje
           !loginInfo.last_sign_in_at ? <span style={{color:'var(--warn)', fontWeight:600}}>ยังไม่เคย Login</span> :
           <span>{fmtDateTime(loginInfo.last_sign_in_at)}</span>
         }/>
+        {loginInfo?.updated_at && (
+          <Field label="เปลี่ยนรหัสผ่านล่าสุด" value={fmtDateTime(loginInfo.updated_at)}/>
+        )}
         {loginInfo?.confirmed_at && (
           <Field label="ยืนยันบัญชีเมื่อ" value={fmtDateTime(loginInfo.confirmed_at)}/>
         )}
