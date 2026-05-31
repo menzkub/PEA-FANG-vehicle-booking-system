@@ -789,7 +789,7 @@ function App() {
           <span style={{fontSize:15}}>🔧</span>
           <span style={{fontWeight:600}}>ระบบอยู่ในโหมดบำรุงรักษา</span>
           <span style={{opacity:0.8}}>— ผู้ใช้ทั่วไปไม่สามารถเข้าใช้งานได้</span>
-          <button className="btn sm" style={{marginLeft:'auto',background:'#fed7aa',color:'#7c2d00',fontWeight:600,fontSize:12}} onClick={() => setConfirm({ kind:'primary', title:'เปิดระบบใช้งาน?', message:'ผู้ใช้ทุกคนจะสามารถเข้าใช้งานระบบได้ตามปกติ', onConfirm: () => handleSetMaintenanceMode(false) })}>เปิดระบบ</button>
+          <button className="btn sm" style={{marginLeft:'auto',background:'rgba(0,0,0,0.25)',color:'#1c1400',fontWeight:700,fontSize:12,border:'1.5px solid rgba(0,0,0,0.3)'}} onClick={() => setConfirm({ kind:'primary', title:'เปิดระบบใช้งาน?', message:'ผู้ใช้ทุกคนจะสามารถเข้าใช้งานระบบได้ตามปกติ', onConfirm: () => handleSetMaintenanceMode(false) })}>เปิดระบบ</button>
         </div>
       )}
       <main className={`main${maintenanceMode && currentUser.role === 'admin' ? ' has-maintenance-banner' : ''}`}>
