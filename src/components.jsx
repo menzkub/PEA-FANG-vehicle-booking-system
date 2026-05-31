@@ -88,9 +88,9 @@ function StatusPill({ status }) {
 
 // ─── Sidebar ─────────────────────────────────────────────────────────
 const SETTINGS_CHILDREN = [
-  { key: "settings-account",  label: "บัญชีผู้ใช้" },
-  { key: "settings-noti",     label: "การแจ้งเตือน" },
-  { key: "settings-calendar", label: "Calendar Sync" },
+  { key: "settings-account",  label: "👤 บัญชีผู้ใช้" },
+  { key: "settings-noti",     label: "🔔 การแจ้งเตือน" },
+  { key: "settings-calendar", label: "📅 Calendar Sync" },
 ];
 const SETTINGS_CHILDREN_ADMIN = [
   ...SETTINGS_CHILDREN,
