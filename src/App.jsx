@@ -940,16 +940,24 @@ function ResetPasswordScreen({ onDone }) {
   const [done, setDone] = React.useState(false);
   const [err, setErr] = React.useState('');
 
+  const pwChecks = [
+    { key: 'length',  label: 'อย่างน้อย 8 ตัวอักษร',  ok: pw.length >= 8 },
+    { key: 'upper',   label: 'ตัวพิมพ์ใหญ่ A-Z',       ok: /[A-Z]/.test(pw) },
+    { key: 'lower',   label: 'ตัวพิมพ์เล็ก a-z',       ok: /[a-z]/.test(pw) },
+    { key: 'number',  label: 'ตัวเลข 0-9',              ok: /[0-9]/.test(pw) },
+    { key: 'special', label: 'อักขระพิเศษ !@#$%^&*',   ok: /[^A-Za-z0-9]/.test(pw) },
+  ];
+  const pwScore = pwChecks.filter(c => c.ok).length;
   const strength = pw.length === 0 ? null
-    : pw.length < 6 ? { label: 'สั้นเกินไป', color: '#ef4444', pct: 25 }
-    : pw.length < 8 ? { label: 'อ่อน', color: '#f97316', pct: 50 }
-    : /[A-Z]/.test(pw) && /[0-9]/.test(pw) ? { label: 'แข็งแกร่ง', color: '#22c55e', pct: 100 }
-    : { label: 'ปานกลาง', color: '#eab308', pct: 75 };
+    : pwScore <= 2 ? { label: 'อ่อนแอ',    color: '#ef4444', pct: Math.max(20, pwScore * 20) }
+    : pwScore === 3 ? { label: 'ปานกลาง', color: '#eab308', pct: 60 }
+    : pwScore === 4 ? { label: 'ดี',        color: '#3b82f6', pct: 80 }
+    :                 { label: 'แข็งแกร่ง', color: '#22c55e', pct: 100 };
 
   async function save() {
     setErr('');
-    if (pw.length < 8) { setErr('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร'); return; }
     if (pw !== confirm) { setErr('รหัสผ่านไม่ตรงกัน'); return; }
+    if (pwScore < 5) { setErr('รหัสผ่านยังไม่ครบเงื่อนไข — กรุณาตรวจสอบรายการที่ยังแสดงเป็นสีแดง'); return; }
     setSaving(true);
     const { error } = await supabase.auth.updateUser({ password: pw });
     setSaving(false);
@@ -997,12 +1005,21 @@ function ResetPasswordScreen({ onDone }) {
                     {showPw ? '🙈' : '👁️'}
                   </button>
                 </div>
-                {strength && (
+                {pw.length > 0 && (
                   <div style={{marginTop:6}}>
-                    <div style={{height:4, borderRadius:2, background:'#f1f5f9', overflow:'hidden'}}>
-                      <div style={{height:'100%', width:`${strength.pct}%`, background:strength.color, borderRadius:2, transition:'width 0.3s, background 0.3s'}}/>
+                    <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:4}}>
+                      <div style={{flex:1, height:4, borderRadius:2, background:'#f1f5f9', overflow:'hidden'}}>
+                        <div style={{height:'100%', width:`${strength.pct}%`, background:strength.color, borderRadius:2, transition:'width 0.3s, background 0.3s'}}/>
+                      </div>
+                      <div style={{fontSize:11, color:strength.color, fontWeight:600, minWidth:54, textAlign:'right'}}>{strength.label}</div>
                     </div>
-                    <div style={{fontSize:11, color:strength.color, marginTop:3, fontWeight:500}}>{strength.label}</div>
+                    <div style={{display:'flex', flexWrap:'wrap', gap:'3px 10px', marginTop:4}}>
+                      {pwChecks.map(c => (
+                        <span key={c.key} style={{fontSize:11, color: c.ok ? '#22c55e' : '#ef4444', display:'inline-flex', alignItems:'center', gap:3}}>
+                          <span>{c.ok ? '✓' : '✗'}</span>{c.label}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

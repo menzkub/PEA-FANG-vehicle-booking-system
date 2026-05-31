@@ -129,6 +129,8 @@ function AccountSettings({ currentUser, deptNames, onUpdateProfile, pushToast })
   const [saving, setSaving] = React.useState(false);
 
   const [showPw, setShowPw] = React.useState(false);
+  const [showPwNew, setShowPwNew] = React.useState(false);
+  const [showPwConfirm, setShowPwConfirm] = React.useState(false);
   const [pwForm, setPwForm] = React.useState({ newPw: '', confirmPw: '' });
   const [pwLoading, setPwLoading] = React.useState(false);
   const [pwErr, setPwErr] = React.useState('');
@@ -327,7 +329,10 @@ function AccountSettings({ currentUser, deptNames, onUpdateProfile, pushToast })
             <div className="col gap-2">
               <div className="field">
                 <label className="field-lbl">รหัสผ่านใหม่</label>
-                <input className="input" type="password" value={pwForm.newPw} onChange={e => setPwForm({...pwForm, newPw: e.target.value})} placeholder="อย่างน้อย 8 ตัวอักษร"/>
+                <div style={{position:'relative'}}>
+                  <input className="input" type={showPwNew ? 'text' : 'password'} value={pwForm.newPw} onChange={e => setPwForm({...pwForm, newPw: e.target.value})} placeholder="อย่างน้อย 8 ตัวอักษร" style={{paddingRight:40}}/>
+                  <button type="button" onClick={() => setShowPwNew(v => !v)} style={{position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', fontSize:16, padding:0}}>{showPwNew ? '🙈' : '👁️'}</button>
+                </div>
               </div>
               {pwForm.newPw.length > 0 && (() => {
                 const { score, checks, missing, label, color } = calcPwStrength(pwForm.newPw);
@@ -355,8 +360,11 @@ function AccountSettings({ currentUser, deptNames, onUpdateProfile, pushToast })
               })()}
               <div className="field">
                 <label className="field-lbl">ยืนยันรหัสผ่านใหม่</label>
-                <input className="input" type="password" value={pwForm.confirmPw} onChange={e => setPwForm({...pwForm, confirmPw: e.target.value})} placeholder="กรอกรหัสผ่านซ้ำ"
-                  style={pwForm.confirmPw && pwForm.newPw !== pwForm.confirmPw ? {borderColor:'var(--danger)'} : {}}/>
+                <div style={{position:'relative'}}>
+                  <input className="input" type={showPwConfirm ? 'text' : 'password'} value={pwForm.confirmPw} onChange={e => setPwForm({...pwForm, confirmPw: e.target.value})} placeholder="กรอกรหัสผ่านซ้ำ"
+                    style={{paddingRight:40, ...(pwForm.confirmPw && pwForm.newPw !== pwForm.confirmPw ? {borderColor:'var(--danger)'} : {})}}/>
+                  <button type="button" onClick={() => setShowPwConfirm(v => !v)} style={{position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-3)', fontSize:16, padding:0}}>{showPwConfirm ? '🙈' : '👁️'}</button>
+                </div>
                 {pwForm.confirmPw && pwForm.newPw !== pwForm.confirmPw && (
                   <div style={{fontSize:12, color:'var(--danger)', marginTop:4}}>รหัสผ่านไม่ตรงกัน</div>
                 )}
