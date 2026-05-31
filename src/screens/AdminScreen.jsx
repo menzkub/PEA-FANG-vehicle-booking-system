@@ -2,6 +2,7 @@
 import React from 'react'
 import { I, StatusPill, VehicleIcon, Modal, fmtDate, fmtDateTime, fmtTime, fmtNum, SearchInput, Select } from '../components'
 import { DEPARTMENTS as DEPT_FALLBACK } from '../data'
+import { supabase } from '../supabase'
 
 function ApprovalsScreen({ bookings, vehicles, users, mileageCorrections = [], user, onApprove, onReject, onApproveMileage, onRejectMileage, onSelectBooking, onPrintVoucher }) {
   const [tab, setTab] = React.useState("pending");
@@ -314,10 +315,30 @@ function MembersScreen({ users, user, departments, onApproveUser, onRejectUser, 
 
 // ─── Member Detail Modal ──────────────────────────────────────────
 function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
+  const [genLink, setGenLink] = React.useState(null);   // { link, name } | 'loading' | { error }
+  const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-reset-link`;
+
+  async function generateResetLink() {
+    setGenLink('loading');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ emp: user.emp }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'เกิดข้อผิดพลาด');
+      setGenLink(json);
+    } catch (e) {
+      setGenLink({ error: e.message });
+    }
+  }
+
   return (
-    <Modal title="ข้อมูลสมาชิก" onClose={onClose} width={520}
+    <Modal title="ข้อมูลสมาชิก" onClose={() => { setGenLink(null); onClose(); }} width={520}
       footer={<>
-        <button className="btn" onClick={onClose}>ปิด</button>
+        <button className="btn" onClick={() => { setGenLink(null); onClose(); }}>ปิด</button>
         {onApprove && <button className="btn sm danger" style={{padding:'8px 14px'}} onClick={onReject}>{I.x} ปฏิเสธ</button>}
         {onApprove && <button className="btn" style={{background:'var(--ok)', color:'white', borderColor:'var(--ok)', padding:'8px 14px'}} onClick={onApprove}>{I.check} อนุมัติสมาชิก</button>}
         {!onApprove && <button className="btn primary" onClick={onEdit}>{I.edit} แก้ไขข้อมูล</button>}
@@ -349,6 +370,48 @@ function MemberDetailModal({ user, onClose, onEdit, onApprove, onReject }) {
         <Field label="วันที่สมัคร" value={fmtDate(user.joined)}/>
         <Field label="รหัสในระบบ" value={user.id}/>
       </div>
+
+      {/* Reset password link generator */}
+      {user.status === 'approved' && (
+        <div style={{marginTop:18, paddingTop:16, borderTop:'1px solid var(--border)'}}>
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: genLink && genLink !== 'loading' ? 10 : 0}}>
+            <div>
+              <div style={{fontSize:13, fontWeight:600}}>🔑 ตั้งรหัสผ่านใหม่</div>
+              <div style={{fontSize:12, color:'var(--text-3)', marginTop:2}}>สร้างลิ้งส่งให้สมาชิกทาง LINE หรือโทรศัพท์</div>
+            </div>
+            <button className="btn sm ghost" onClick={generateResetLink} disabled={genLink === 'loading'}
+              style={{flexShrink:0, display:'flex', alignItems:'center', gap:6}}>
+              {genLink === 'loading' ? '⏳ กำลังสร้าง...' : '🔗 สร้างลิ้ง'}
+            </button>
+          </div>
+
+          {genLink && genLink !== 'loading' && (
+            genLink.error ? (
+              <div style={{padding:'9px 13px', borderRadius:8, background:'var(--danger-bg)', border:'1px solid var(--danger)', color:'var(--danger)', fontSize:12.5}}>
+                ⚠️ {genLink.error}
+              </div>
+            ) : (
+              <div style={{padding:'12px 14px', borderRadius:10, background:'var(--info-bg)', border:'1px solid var(--info)'}}>
+                <div style={{fontSize:12, color:'var(--info)', fontWeight:600, marginBottom:8}}>
+                  ✅ ลิ้งตั้งรหัสผ่านสำหรับ {genLink.name} — ใช้ได้ครั้งเดียว หมดอายุใน 1 ชั่วโมง
+                </div>
+                <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                  <input readOnly value={genLink.link}
+                    style={{flex:1, padding:'7px 10px', borderRadius:7, border:'1px solid var(--border)', fontSize:11.5, fontFamily:'var(--font-mono)', background:'var(--surface)', color:'var(--text-2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0}}
+                  />
+                  <button className="btn sm primary" style={{flexShrink:0}}
+                    onClick={() => { navigator.clipboard.writeText(genLink.link); }}>
+                    📋 คัดลอก
+                  </button>
+                </div>
+                <div style={{fontSize:11, color:'var(--text-3)', marginTop:6}}>
+                  ส่งลิ้งนี้ให้สมาชิกทาง LINE · เมื่อคลิกจะเปิดหน้าตั้งรหัสผ่านใหม่ทันที
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
     </Modal>
   );
 }
