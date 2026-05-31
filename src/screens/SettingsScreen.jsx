@@ -429,6 +429,16 @@ function AccountSettings({ currentUser, deptNames, onUpdateProfile, pushToast })
           </div>
         )}
       </div>
+
+      {/* Build info */}
+      <div style={{marginTop:8, padding:'10px 14px', borderRadius:10, background:'var(--surface-2)', border:'1px solid var(--border)', display:'flex', flexWrap:'wrap', gap:'4px 20px', alignItems:'center'}}>
+        <span style={{fontSize:11.5, color:'var(--text-3)'}}>EasyDrive</span>
+        <span style={{fontSize:11.5, fontWeight:600, color:'var(--pea-purple)', fontFamily:'monospace'}}>v{__APP_VERSION__}</span>
+        <span style={{fontSize:11, color:'var(--text-3)', fontFamily:'monospace'}}>#{__GIT_COMMIT__}</span>
+        <span style={{fontSize:11, color:'var(--text-3)', marginLeft:'auto'}}>
+          build: {new Date(__BUILD_TIME__).toLocaleString('th-TH', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}
+        </span>
+      </div>
     </div>
   );
 }
