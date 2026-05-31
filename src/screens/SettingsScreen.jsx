@@ -820,6 +820,16 @@ function DataSettings({ appConfig, onSaveConfig, defaultConfig, departments, pus
       onConfirm: () => save('fuel_prices', payload) });
   }
 
+  const DEFAULT_SYNC_HOUR = 8;
+  const [syncHour, setSyncHour] = React.useState(() => appConfig?.syncSchedule?.hour ?? DEFAULT_SYNC_HOUR);
+  const syncHourChanged = syncHour !== (appConfig?.syncSchedule?.hour ?? DEFAULT_SYNC_HOUR);
+
+  function saveSyncSchedule() {
+    confirm({ kind:'primary', title:'บันทึกเวลาซิงค์?',
+      message:`ระบบจะซิงค์ราคาน้ำมันอัตโนมัติทุกวัน เวลา ${String(syncHour).padStart(2,'0')}:00 น.`,
+      onConfirm: () => save('sync_schedule', { hour: syncHour }) });
+  }
+
   const [editingCl, setEditingCl] = React.useState(null);
   const [newCl, setNewCl] = React.useState({ label: '', hint: '' });
   const [editingPurpose, setEditingPurpose] = React.useState(null);
@@ -1245,6 +1255,45 @@ CREATE POLICY "auth_write" ON app_config FOR ALL TO authenticated USING (true);`
               </div>
             )}
           </div>
+        {/* ── Auto-sync schedule ── */}
+        <div style={{marginTop:20, padding:'14px 16px', borderRadius:10, border:'1px solid var(--border)', background:'var(--surface-2)'}}>
+          <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+            <span style={{fontSize:16}}>⏰</span>
+            <span style={{fontWeight:600, fontSize:14}}>ตั้งเวลาซิงค์อัตโนมัติ</span>
+            <span style={{fontSize:11.5, color:'var(--text-3)', marginLeft:4}}>(ทุกวัน — Supabase Edge Function)</span>
+          </div>
+          <p className="muted" style={{margin:'0 0 12px', fontSize:12.5}}>
+            ระบบจะดึงราคาน้ำมันจาก PTT โดยอัตโนมัติทุกวันในเวลาที่กำหนด แม้ไม่มีผู้ใช้เปิดแอปอยู่
+          </p>
+          <div style={{display:'flex', alignItems:'center', gap:12, flexWrap:'wrap'}}>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <label style={{fontSize:13, color:'var(--text-2)'}}>เวลาซิงค์:</label>
+              <select
+                value={syncHour}
+                onChange={e => setSyncHour(Number(e.target.value))}
+                style={{padding:'5px 10px', borderRadius:7, border:'1px solid var(--border)', background:'var(--surface)', fontSize:13, color:'var(--text)', cursor:'pointer'}}
+              >
+                {Array.from({length:24}, (_,h) => (
+                  <option key={h} value={h}>{String(h).padStart(2,'0')}:00 น.</option>
+                ))}
+              </select>
+            </div>
+            <button
+              className="btn sm primary"
+              onClick={saveSyncSchedule}
+              disabled={!syncHourChanged || saving}
+              style={{opacity: syncHourChanged ? 1 : 0.5}}
+            >
+              บันทึกเวลา
+            </button>
+            {!syncHourChanged && (
+              <span style={{fontSize:12, color:'var(--text-3)'}}>✓ ตั้งไว้แล้ว {String(syncHour).padStart(2,'0')}:00 น.</span>
+            )}
+          </div>
+          <p style={{margin:'10px 0 0', fontSize:11.5, color:'var(--text-3)'}}>
+            หมายเหตุ: หลังเปลี่ยนเวลา ต้องอัปเดต SQL ใน Supabase Dashboard ด้วย (ดูคู่มือสำหรับนักพัฒนา)
+          </p>
+        </div>
         </div>
       )}
 

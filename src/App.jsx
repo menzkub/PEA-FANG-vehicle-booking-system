@@ -40,7 +40,7 @@ function App() {
   const [vehicleHistory, setVehicleHistory] = React.useState([]);
   const [mileageCorrections, setMileageCorrections] = React.useState([]);
   const [departments, setDepartments] = React.useState([]);
-  const [appConfig, setAppConfig] = React.useState({ checklist: null, vehicleTypes: null, fuelTypes: null, purposes: null, fuelPrices: null });
+  const [appConfig, setAppConfig] = React.useState({ checklist: null, vehicleTypes: null, fuelTypes: null, purposes: null, fuelPrices: null, syncSchedule: null });
 
   const [route, setRoute] = React.useState("dashboard");
   const [selectedVehicle, setSelectedVehicle] = React.useState(null);
@@ -147,7 +147,7 @@ function App() {
     if (cfg.data) {
       const map = {};
       cfg.data.forEach(r => { map[r.key] = r.value; });
-      setAppConfig({ checklist: map.checklist || null, vehicleTypes: map.vehicle_types || null, fuelTypes: map.fuel_types || null, purposes: map.purposes || null, fuelPrices: map.fuel_prices || null });
+      setAppConfig({ checklist: map.checklist || null, vehicleTypes: map.vehicle_types || null, fuelTypes: map.fuel_types || null, purposes: map.purposes || null, fuelPrices: map.fuel_prices || null, syncSchedule: map.sync_schedule || null });
     }
 
     if (v.error?.code === '42501' || b.error?.code === '42501') {
@@ -622,7 +622,7 @@ function App() {
   async function handleSaveConfig(key, value) {
     const { error } = await supabase.from('app_config').upsert({ key, value, updated_at: new Date().toISOString() });
     if (error) throw error;
-    const keyMap = { checklist: 'checklist', vehicle_types: 'vehicleTypes', fuel_types: 'fuelTypes', purposes: 'purposes', fuel_prices: 'fuelPrices' };
+    const keyMap = { checklist: 'checklist', vehicle_types: 'vehicleTypes', fuel_types: 'fuelTypes', purposes: 'purposes', fuel_prices: 'fuelPrices', sync_schedule: 'syncSchedule' };
     setAppConfig(prev => ({ ...prev, [keyMap[key] || key]: value }));
   }
 
