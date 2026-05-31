@@ -41,11 +41,12 @@ function App() {
   const [mileageCorrections, setMileageCorrections] = React.useState([]);
   const [departments, setDepartments] = React.useState([]);
   const [appConfig, setAppConfig] = React.useState({ checklist: null, vehicleTypes: null, fuelTypes: null, purposes: null, fuelPrices: null, syncSchedule: null, resetContact: null });
-  const [recoveryMode, setRecoveryMode] = React.useState(() => {
-    const flag = sessionStorage.getItem('pea-recovery') === '1';
-    if (flag) sessionStorage.removeItem('pea-recovery');
-    return flag;
-  });
+  // Reads sessionStorage set by either the inline script (index.html) or
+  // the module-level onAuthStateChange in supabase.js — do NOT remove here,
+  // let getSession() clean up after confirming recovery.
+  const [recoveryMode, setRecoveryMode] = React.useState(() =>
+    sessionStorage.getItem('pea-recovery') === '1'
+  );
 
   const [route, setRoute] = React.useState("dashboard");
   const [selectedVehicle, setSelectedVehicle] = React.useState(null);
@@ -80,9 +81,15 @@ function App() {
   // ── Init: restore session on page refresh ──
   React.useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const isRecovery = sessionStorage.getItem('pea-recovery') === '1'
-        || recoveryMode;
-      if (session && !isRecovery) await initUser(session.user.id);
+      // By the time getSession() resolves, Supabase's _initialize() has completed
+      // and the module-level listener may have set pea-recovery in sessionStorage.
+      const isRecovery = sessionStorage.getItem('pea-recovery') === '1' || recoveryMode;
+      sessionStorage.removeItem('pea-recovery');
+      if (isRecovery) {
+        setRecoveryMode(true);
+      } else if (session) {
+        await initUser(session.user.id);
+      }
       setLoaderFading(true);
       setTimeout(() => setAppReady(true), 420);
     });

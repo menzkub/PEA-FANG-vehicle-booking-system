@@ -14,8 +14,10 @@
   <body>
     <div id="root"></div>
     <script>
-      // Must run before ES modules load — Supabase clears the hash during init
-      if (window.location.hash.includes('type=recovery')) {
+      // Runs before any ES module — catches type=recovery in both
+      // implicit flow (hash) and PKCE flow (query string)
+      if (window.location.hash.includes('type=recovery') ||
+          window.location.search.includes('type=recovery')) {
         sessionStorage.setItem('pea-recovery', '1');
       }
     </script>

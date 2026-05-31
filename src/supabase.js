@@ -10,3 +10,12 @@ export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder'
 )
+
+// Register listener at module level — BEFORE React mounts — so we catch
+// PASSWORD_RECOVERY even when getSession() awaits _initialize() internally.
+// Works for both implicit flow (hash tokens) and PKCE flow (code exchange).
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    sessionStorage.setItem('pea-recovery', '1')
+  }
+})
